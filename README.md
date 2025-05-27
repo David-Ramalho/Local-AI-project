@@ -3,8 +3,8 @@
 
 
 ##  🎯 What You Get
-###🛡️ Privacy-Focused AI: Keep your data local—no cloud required.
-    Your conversations and data stay on your machine, ensuring full control and privacy.
+### 🛡️ Privacy-Focused AI: Keep your data local—no cloud required.
+   Your conversations and data stay on your machine, ensuring full control and privacy.
   
 
 ###  🧠 Model Flexibility: Run and switch between models like LLaMA 2, Mistral, or any Ollama-supported model.
