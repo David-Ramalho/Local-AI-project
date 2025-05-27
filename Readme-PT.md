@@ -40,14 +40,14 @@
  ## 2. 📦 Criar um Volume Persistente para Modelos do Ollama
         Isso garante que seus modelos baixados sobrevivam a paradas ou exclusões de containers:  
           docker volume create ollama-data
-         ![image](https://github.com/user-attachments/assets/8da63b15-09b4-48e2-8716-9ec9660330b7)
+  ![image](https://github.com/user-attachments/assets/8da63b15-09b4-48e2-8716-9ec9660330b7)
          
          
  ## 3. 🤖 Executar o Ollama como um Serviço HTTP
         Este comando executa o Ollama e o torna disponível como uma API:
           docker run -d --name ollama-server --gpus all -p 11434:11434 -v ollama-data:/root/.ollama -e OLLAMA_HOST="0.0.0.0:11434" ollama/ollama:latest serve
          
-        ![image](https://github.com/user-attachments/assets/24ae70d9-86cd-4f16-aa0f-94c8993b39b2)
+  ![image](https://github.com/user-attachments/assets/24ae70d9-86cd-4f16-aa0f-94c8993b39b2)
   
   
         📘 Detalhamento:  
@@ -85,7 +85,7 @@
         Abra seu navegador e vá para:
         http://localhost:3000
       
-      ![image](https://github.com/user-attachments/assets/ebc2a7e5-68c5-4e4f-9f1e-2d2e9fd0e0dd)
+   ![image](https://github.com/user-attachments/assets/ebc2a7e5-68c5-4e4f-9f1e-2d2e9fd0e0dd)
 
       
  ## 🌍 Opcional: Compartilhamento Online com Ngrok
