@@ -50,7 +50,7 @@
           This command runs Ollama and makes it available as an API:
             docker run -d --name ollama-server --gpus all -p 11434:11434 -v ollama-data:/root/.ollama -e OLLAMA_HOST="0.0.0.0:11434" ollama/ollama:latest serve
            
-          ![image](https://github.com/user-attachments/assets/24ae70d9-86cd-4f16-aa0f-94c8993b39b2)
+ ![image](https://github.com/user-attachments/assets/24ae70d9-86cd-4f16-aa0f-94c8993b39b2)
 
 
           📘 Breakdown:  
@@ -91,7 +91,7 @@
           Open your browser and go to:
           http://localhost:3000
         
-        ![image](https://github.com/user-attachments/assets/ebc2a7e5-68c5-4e4f-9f1e-2d2e9fd0e0dd)
+![image](https://github.com/user-attachments/assets/ebc2a7e5-68c5-4e4f-9f1e-2d2e9fd0e0dd)
 
 ## 🌍 Optional: Sharing Online with Ngrok
           Want to let friends or colleagues use your AI remotely? Use ngrok to create a secure tunnel to your localhost.  
