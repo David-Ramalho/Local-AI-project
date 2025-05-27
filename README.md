@@ -4,11 +4,11 @@
 
 ##  🎯 What You Get
 ### 🛡️ Privacy-Focused AI: Keep your data local—no cloud required.
-   Your conversations and data stay on your machine, ensuring full control and privacy.
+      Your conversations and data stay on your machine, ensuring full control and privacy.
   
 
 ###  🧠 Model Flexibility: Run and switch between models like LLaMA 2, Mistral, or any Ollama-supported model.
- Ollama supports a variety of open-source models—pick the one that fits your needs.
+     Ollama supports a variety of open-source models—pick the one that fits your needs.
 
 
 ###  🧩 Personalization: Use Open-WebUI to give your AI memory and personality.
