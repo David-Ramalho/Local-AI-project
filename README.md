@@ -111,38 +111,44 @@
 
 
 
-## ❓ FAQs
+# ❓ FAQs
 
-          ## Q: I'm getting a "failed to write file: exit status 0xffffffff" error in Ubuntu WSL. What’s the fix?
-          A: This happens when Docker can’t connect to your Ubuntu WSL distro. Here's how to fix it:
+   ## Q: I'm getting a "failed to write file: exit status 0xffffffff" error in Ubuntu WSL. What’s the fix?
+   
+   A: This happens when Docker can’t connect to your Ubuntu WSL distro. Here's how to fix it:
           
           Unregister the broken distro:
             wsl --unregister Ubuntu
           Re-install Ubuntu:
             wsl --install -d Ubuntu
           
-          Go to Docker Desktop → Settings → Resources → WSL Integration, and re-enable Ubuntu.
+   Go to Docker Desktop → Settings → Resources → WSL Integration, and re-enable Ubuntu.
           
-          Restart Docker Desktop.
+   Restart Docker Desktop.
         
-        ## Q: Can I use different models?
-          Absolutely! In step 4, replace phi4-mini-reasoning:latest with any other model like llama2:13b.
-         ###  👉 Check Ollama’s model library for more options!
+   ## Q: Can I use different models?
+   
+   Absolutely! In step 4, replace phi4-mini-reasoning:latest with any other model like llama2:13b.
+   
+   ###  👉 Check Ollama’s model library for more options!
         
-        ## Q: How do I stop or delete the containers?
-        To stop the containers:
+   ## Q: How do I stop or delete the containers?
+   To stop the containers:
+   
           docker stop ollama-server open-webui
-        To remove them:
+   To remove them:
+   
           docker rm ollama-server open-webui
           
-        ### 🗂️ Note: Your data is safe in volumes, even if containers are deleted.
+  ### 🗂️ Note: Your data is safe in volumes, even if containers are deleted.
         
-        ## Q: What if I don’t have a GPU?
-          No problem! Just remove the --gpus all flag from the Docker run commands.
-          ⚠️ It’ll run on your CPU—slower, but it works!
+   ## Q: What if I don’t have a GPU?
+   
+   No problem! Just remove the --gpus all flag from the Docker run commands.   
+   ⚠️ It’ll run on your CPU—slower, but it works!
 
-##  👏 Credits
-        ## Thanks to the amazing tools that made this project personal project possible:
+#  👏 Credits
+   ## Thanks to the amazing tools that made this project personal project possible:
         
         ### 💡 Ollama
         ### 🖥️ Open-WebUI
