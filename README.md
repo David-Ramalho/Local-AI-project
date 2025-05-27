@@ -26,7 +26,7 @@
 
 
 # 🛠️ Installation Steps
-   Here’s how to set up your local AI environment from scratch. These are the exact steps I used—just follow along!
+   Here’s how to set up your local AI environment from scratch. These are the exact steps that I came to strucuture in the simplest way I could. So just follow along!
 
 
 ## 1. 🔧 Install Docker Desktop
