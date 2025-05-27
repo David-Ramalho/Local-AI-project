@@ -3,7 +3,7 @@
 
 
 ###  🎯 What You Get
-###🛡️ Privacy-Focused AI: Keep your data local—no cloud required.
+### 🛡️ Privacy-Focused AI: Keep your data local—no cloud required.
         → Your conversations and data stay on your machine, ensuring full control and privacy.
 
 ###  🧠 Model Flexibility: Run and switch between models like LLaMA 2, Mistral, or any Ollama-supported model.
@@ -25,7 +25,7 @@
 Here’s how to set up your local AI environment from scratch. These are the exact steps I used—just follow along!
 
 
-##1. 🔧 Install Docker Desktop
+## 1. 🔧 Install Docker Desktop
   Open PowerShell or CMD as Administrator.
   
   Run the following command to install Docker:
