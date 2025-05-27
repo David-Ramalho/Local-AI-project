@@ -4,7 +4,7 @@
 
 ## 🎯 O Que Você Obtém
 ### 🛡️ IA Focada na Privacidade: Mantenha seus dados locais—sem necessidade de nuvem.
-    → Suas conversas e dados ficam na sua máquina, garantindo controle total e privacidade.
+   → Suas conversas e dados ficam na sua máquina, garantindo controle total e privacidade.
     
 ### 🧠 Flexibilidade de Modelos: Execute e alterne entre modelos como LLaMA 2, Mistral, ou qualquer modelo suportado pelo Ollama.
      → O Ollama suporta uma variedade de modelos de código aberto—escolha o que melhor se adequa às suas necessidades.
