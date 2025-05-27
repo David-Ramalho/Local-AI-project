@@ -107,8 +107,8 @@
   📝 Um guia completo sobre usar Ngrok está chegando em breve, mas sinta-se à vontade para experimentar por conta própria!
 
         
-### ❓ Perguntas Frequentes
-  ## P: Estou recebendo um erro "failed to write file: exit status 0xffffffff" no Ubuntu WSL. Qual é a solução?
+# ❓ Perguntas Frequentes
+  ### P: Estou recebendo um erro "failed to write file: exit status 0xffffffff" no Ubuntu WSL. Qual é a solução?
      R: Isso acontece quando o Docker não consegue se conectar à sua distro Ubuntu WSL. Aqui está como corrigir:
       
       Desregistrar a distro com problema:
@@ -120,10 +120,10 @@
       
       Reinicie o Docker Desktop.
     
-  ## P: Posso usar modelos diferentes?
+   ### P: Posso usar modelos diferentes?
      Absolutamente! No passo 4, substitua phi4-mini-reasoning:latest por qualquer outro modelo como llama2:13b.
    
-   ###  👉 Confira a biblioteca de modelos do Ollama para mais opções!
+   ##  👉 Confira a biblioteca de modelos do Ollama para mais opções!
     
     ## P: Como paro ou excluo os containers?
     Para parar os containers:
@@ -131,15 +131,15 @@
     Para removê-los:
       docker rm ollama-server open-webui
       
-  ### 🗂️ Nota: Seus dados estão seguros nos volumes, mesmo se os containers forem excluídos.
+  ## 🗂️ Nota: Seus dados estão seguros nos volumes, mesmo se os containers forem excluídos.
     
-  ## P: E se eu não tiver uma GPU?
+  ### P: E se eu não tiver uma GPU?
   
     Sem problemas! Apenas remova a flag --gpus all dos comandos Docker run.
     
   ⚠️ Vai executar na sua CPU—mais lento, mas funciona!
       
-## 👏 Créditos
+# 👏 Créditos
    ## Obrigado às ferramentas incríveis que tornaram este projeto pessoal possível:
     
      ### 💡 Ollama
