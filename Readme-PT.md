@@ -1,8 +1,8 @@
 # 🚀 Projeto-IA-Local
-    ### Este é um ambiente de IA local alimentado pelo Ollama, Docker e Open-WebUI. Ele permite executar e interagir com modelos de IA (como LLaMA 3) diretamente na sua máquina através de uma interface similar ao ChatGPT—privado, rápido e personalizável em apenas 6 passos!
+ ### Este é um ambiente de IA local alimentado pelo Ollama, Docker e Open-WebUI. Ele permite executar e interagir com modelos de IA (como LLaMA 3) diretamente na sua máquina através de uma interface similar ao ChatGPT—privado, rápido e personalizável em apenas 6 passos!
 
 
-### 🎯 O Que Você Obtém
+## 🎯 O Que Você Obtém
 ### 🛡️ IA Focada na Privacidade: Mantenha seus dados locais—sem necessidade de nuvem.
     → Suas conversas e dados ficam na sua máquina, garantindo controle total e privacidade.
     
