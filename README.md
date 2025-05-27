@@ -26,16 +26,16 @@
 
 
 # 🛠️ Installation Steps
-        Here’s how to set up your local AI environment from scratch. These are the exact steps I used—just follow along!
+   Here’s how to set up your local AI environment from scratch. These are the exact steps I used—just follow along!
 
 
 ## 1. 🔧 Install Docker Desktop
-         Open PowerShell or CMD as Administrator.
+   Open PowerShell or CMD as Administrator.
+           
+    Run the following command to install Docker:
+     winget install --id Docker.DockerDesktop --source winget
           
-          Run the following command to install Docker:
-            winget install --id Docker.DockerDesktop --source winget
-          
-         * Reboot your machine after installation. Launch Docker Desktop, complete the first-run setup, and make sure “Use the WSL 2 based engine” is enabled. 
+   * Reboot your machine after installation. Launch Docker Desktop, complete the first-run setup, and make sure “Use the WSL 2 based engine” is enabled. 
 
 
 
