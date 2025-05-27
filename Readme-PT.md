@@ -4,28 +4,28 @@
 
 ## 🎯 O Que Você Obtém
 ### 🛡️ IA Focada na Privacidade: Mantenha seus dados locais—sem necessidade de nuvem.
-   → Suas conversas e dados ficam na sua máquina, garantindo controle total e privacidade.
+   Suas conversas e dados ficam na sua máquina, garantindo controle total e privacidade.
 
     
 ### 🧠 Flexibilidade de Modelos: Execute e alterne entre modelos como LLaMA 2, Mistral, ou qualquer modelo suportado pelo Ollama.
-   → O Ollama suporta uma variedade de modelos de código aberto—escolha o que melhor se adequa às suas necessidades.
+   O Ollama suporta uma variedade de modelos de código aberto—escolha o que melhor se adequa às suas necessidades.
    
      
 ### 🧩 Personalização: Use o Open-WebUI para dar memória e personalidade à sua IA.
-   → Personalize como sua IA se comporta e interage com você.
+   Personalize como sua IA se comporta e interage com você.
    
      
 ### 💾 Armazenamento Persistente: Os volumes do Docker mantêm seus modelos e dados seguros—mesmo após uma reinicialização.
-   → Modelos baixados e configurações não desaparecerão quando o container parar ou reiniciar.
+   Modelos baixados e configurações não desaparecerão quando o container parar ou reiniciar.
    
      
 ### 🌐 Compartilhamento Online Opcional: Use ferramentas como ngrok para compartilhar sua IA com outros de forma segura pela internet.
-  → Ótimo para acesso remoto, demonstrações, ou colaboração com amigos e equipes.
+  Ótimo para acesso remoto, demonstrações, ou colaboração com amigos e equipes.
 
 
     
 # 🛠️ Passos de Instalação
-  Aqui está como configurar seu ambiente de IA local do zero. Estes são os passos exatos que eu usei—apenas siga!
+  Aqui está como configurar seu ambiente de IA local do zero. Estes são os passos que estruturei da forma mais simples possível após muitos testes e tentativas. Eu estruturei esse ambiente cinco vezes, tanto no Windows quanto no Linux, testando diferentes métodos. Então é só seguir o passo a passo da melhor forma posssível.
 
       
  ## 1. 🔧 Instalar Docker Desktop
