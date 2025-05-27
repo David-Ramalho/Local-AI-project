@@ -4,23 +4,23 @@
 
 ##  🎯 What You Get
 ### 🛡️ Privacy-Focused AI: Keep your data local—no cloud required.
-  → Your conversations and data stay on your machine, ensuring full control and privacy.
+   Your conversations and data stay on your machine, ensuring full control and privacy.
   
 
 ###  🧠 Model Flexibility: Run and switch between models like LLaMA 2, Mistral, or any Ollama-supported model.
- → Ollama supports a variety of open-source models—pick the one that fits your needs.
+ Ollama supports a variety of open-source models—pick the one that fits your needs.
 
 
 ###  🧩 Personalization: Use Open-WebUI to give your AI memory and personality.
-  → Customize how your AI behaves and interacts with you.
+  Customize how your AI behaves and interacts with you.
 
 
 ###  💾 Persistent Storage: Docker volumes keep your models and data safe—even after a reboot.
- → Downloaded models and settings won’t disappear when the container stops or restarts.
+  Downloaded models and settings won’t disappear when the container stops or restarts.
  
 
 ###  🌐 Optional Online Sharing: Use tools like ngrok to securely share your AI with others over the internet.
-  → Great for remote access, demos, or collaborating with friends and teams.
+  Great for remote access, demos, or collaborating with friends and teams.
 
 
 
