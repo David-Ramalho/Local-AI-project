@@ -42,7 +42,7 @@
 ## 2. 📦 Create a Persistent Volume for Ollama Models
           This makes sure your downloaded models survive container stops or deletions:  
             docker volume create ollama-data
-           ![image](https://github.com/user-attachments/assets/8da63b15-09b4-48e2-8716-9ec9660330b7)
+ ![image](https://github.com/user-attachments/assets/8da63b15-09b4-48e2-8716-9ec9660330b7)
 
 
 
