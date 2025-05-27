@@ -1,5 +1,5 @@
 # 🚀 Local-AI-project
-###This is a local AI environment powered by Ollama, Docker, and Open-WebUI. It lets you run and interact with AI models (like LLaMA 3) right on your machine through a ChatGPT-like interface—private, fast, and customizable—in just 6 steps!
+### This is a local AI environment powered by Ollama, Docker, and Open-WebUI. It lets you run and interact with AI models (like LLaMA 3) right on your machine through a ChatGPT-like interface—private, fast, and customizable—in just 6 steps!
 
 
 ##🎯 What You Get
