@@ -25,32 +25,36 @@
 
     
 # 🛠️ Passos de Instalação
-      Aqui está como configurar seu ambiente de IA local do zero. Estes são os passos exatos que eu usei—apenas siga!
+  Aqui está como configurar seu ambiente de IA local do zero. Estes são os passos exatos que eu usei—apenas siga!
 
       
  ## 1. 🔧 Instalar Docker Desktop
-       Abra o PowerShell ou CMD como Administrador.
+   Abra o PowerShell ou CMD como Administrador.
         
-        Execute o seguinte comando para instalar o Docker:
+   Execute o seguinte comando para instalar o Docker:
+   
           winget install --id Docker.DockerDesktop --source winget
         
-       * Reinicie sua máquina após a instalação. Inicie o Docker Desktop, complete a configuração inicial e certifique-se de que "Use the WSL 2 based engine" esteja habilitado.
+  * Reinicie sua máquina após a instalação. Inicie o Docker Desktop, complete a configuração inicial e certifique-se de que "Use the WSL 2 based engine" esteja habilitado.
        
 
  ## 2. 📦 Criar um Volume Persistente para Modelos do Ollama
-        Isso garante que seus modelos baixados sobrevivam a paradas ou exclusões de containers:  
+   Isso garante que seus modelos baixados sobrevivam a paradas ou exclusões de containers:  
+   
           docker volume create ollama-data
   ![image](https://github.com/user-attachments/assets/8da63b15-09b4-48e2-8716-9ec9660330b7)
          
          
  ## 3. 🤖 Executar o Ollama como um Serviço HTTP
-        Este comando executa o Ollama e o torna disponível como uma API:
+  Este comando executa o Ollama e o torna disponível como uma API:
+  
           docker run -d --name ollama-server --gpus all -p 11434:11434 -v ollama-data:/root/.ollama -e OLLAMA_HOST="0.0.0.0:11434" ollama/ollama:latest serve
          
   ![image](https://github.com/user-attachments/assets/24ae70d9-86cd-4f16-aa0f-94c8993b39b2)
   
   
-        📘 Detalhamento:  
+   📘 Detalhamento:  
+   
           -d: Executar em segundo plano  
           --gpus all: Usar sua GPU se disponível  
           -p 11434:11434: Expor a porta da API do Ollama  
@@ -60,43 +64,52 @@
 
           
  ## 4. 📥 Baixar um Modelo via CLI do Ollama
-        Baixe seu modelo de IA preferido (exemplo abaixo usa phi4-mini-reasoning):  
+  Baixe seu modelo de IA preferido (exemplo abaixo usa phi4-mini-reasoning):  
+  
           docker exec -it ollama-server ollama pull phi4-mini-reasoning:latest
          
-        💡 Você pode substituir phi4-mini-reasoning:latest por qualquer outro modelo—como llama3.1:8b. Confira a biblioteca de modelos do Ollama para mais opções em https://ollama.com/search
+  💡 Você pode substituir phi4-mini-reasoning:latest por qualquer outro modelo—como llama3.1:8b. Confira a biblioteca de modelos do Ollama para mais opções em https://ollama.com/search
 
         
   ## 5. 🌐 Executar Open-WebUI e Conectar ao Ollama
-        Primeiro, crie um volume para armazenar os dados do WebUI:
+   Primeiro, crie um volume para armazenar os dados do WebUI:
+   
           docker volume create open-webui
         
-        Em seguida, execute o seguinte comando para iniciar a interface:
+  Em seguida, execute o seguinte comando para iniciar a interface:
+  
           docker run -d --name open-webui --restart always --gpus all -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data -e PROVIDERS="ollama" -e OLLAMA_URL="http://host.docker.internal:11434" ghcr.io/open-webui/open-webui:cuda
       
         
-        📘 Detalhamento:  
+   📘 Detalhamento:  
+   
           --restart always: Reinicialização automática em caso de falha ou reinicialização  
           --gpus all: Opcional, para melhor performance  
           -p 3000:8080: WebUI estará disponível em http://localhost:3000  
           -v open-webui:/app/backend/data: Configurações persistentes do WebUI  
           -e PROVIDERS="ollama": Definir Ollama como backend  
           -e OLLAMA_URL: Dizer ao WebUI onde encontrar seu servidor Ollama
+          
   ## 6. 🗨️ Navegue, Selecione e Gere!
-        Abra seu navegador e vá para:
+  Abra seu navegador e vá para:
+  
         http://localhost:3000
       
    ![image](https://github.com/user-attachments/assets/ebc2a7e5-68c5-4e4f-9f1e-2d2e9fd0e0dd)
 
       
  ## 🌍 Opcional: Compartilhamento Online com Ngrok
-        Quer permitir que amigos ou colegas usem sua IA remotamente? Use ngrok para criar um túnel seguro para seu localhost.  
-        Cadastre-se para uma conta gratuita aqui: https://ngrok.com    
-        📝 Um guia completo sobre usar Ngrok está chegando em breve, mas sinta-se à vontade para experimentar por conta própria!
+   Quer permitir que amigos ou colegas usem sua IA remotamente? Use ngrok para criar um túnel seguro para seu localhost.  
+        Cadastre-se para uma conta gratuita aqui:
+        
+        https://ngrok.com    
+        
+  📝 Um guia completo sobre usar Ngrok está chegando em breve, mas sinta-se à vontade para experimentar por conta própria!
 
         
-## ❓ Perguntas Frequentes
-      ## P: Estou recebendo um erro "failed to write file: exit status 0xffffffff" no Ubuntu WSL. Qual é a solução?
-      R: Isso acontece quando o Docker não consegue se conectar à sua distro Ubuntu WSL. Aqui está como corrigir:
+### ❓ Perguntas Frequentes
+  ## P: Estou recebendo um erro "failed to write file: exit status 0xffffffff" no Ubuntu WSL. Qual é a solução?
+     R: Isso acontece quando o Docker não consegue se conectar à sua distro Ubuntu WSL. Aqui está como corrigir:
       
       Desregistrar a distro com problema:
         wsl --unregister Ubuntu
@@ -107,9 +120,10 @@
       
       Reinicie o Docker Desktop.
     
-    ## P: Posso usar modelos diferentes?
-      Absolutamente! No passo 4, substitua phi4-mini-reasoning:latest por qualquer outro modelo como llama2:13b.
-     ###  👉 Confira a biblioteca de modelos do Ollama para mais opções!
+  ## P: Posso usar modelos diferentes?
+     Absolutamente! No passo 4, substitua phi4-mini-reasoning:latest por qualquer outro modelo como llama2:13b.
+   
+   ###  👉 Confira a biblioteca de modelos do Ollama para mais opções!
     
     ## P: Como paro ou excluo os containers?
     Para parar os containers:
@@ -117,18 +131,21 @@
     Para removê-los:
       docker rm ollama-server open-webui
       
-    ### 🗂️ Nota: Seus dados estão seguros nos volumes, mesmo se os containers forem excluídos.
+  ### 🗂️ Nota: Seus dados estão seguros nos volumes, mesmo se os containers forem excluídos.
     
-    ## P: E se eu não tiver uma GPU?
-      Sem problemas! Apenas remova a flag --gpus all dos comandos Docker run.
-      ⚠️ Vai executar na sua CPU—mais lento, mas funciona!
+  ## P: E se eu não tiver uma GPU?
+  
+    Sem problemas! Apenas remova a flag --gpus all dos comandos Docker run.
+    
+  ⚠️ Vai executar na sua CPU—mais lento, mas funciona!
+      
 ## 👏 Créditos
-    ## Obrigado às ferramentas incríveis que tornaram este projeto pessoal possível:
+   ## Obrigado às ferramentas incríveis que tornaram este projeto pessoal possível:
     
-    ### 💡 Ollama
-    ### 🖥️ Open-WebUI
-    ### 🐳 Docker
-    ### 🌐 Ngrok
+     ### 💡 Ollama
+     ### 🖥️ Open-WebUI
+     ### 🐳 Docker
+     ### 🌐 Ngrok
 
     
 💬 É isso! Você agora tem um ambiente de IA local completo, privado, personalizável e extensível. Aproveite seu próprio assistente similar ao ChatGPT—nos seus próprios termos!
