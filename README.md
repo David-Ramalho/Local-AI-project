@@ -202,7 +202,7 @@ It gives you a temporary link to access your local app over the internet.
    ⚠️ It’ll run on your CPU—slower, but it works!
  ---   
 #  👏 Credits
-   ## Thanks to the amazing tools that made this project personal project possible:
+   ## Thanks to the amazing tools that made this personal project possible:
         
       💡 Ollama: https://ollama.com/ --  https://github.com/ollama/ollama
 
