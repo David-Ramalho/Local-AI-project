@@ -160,9 +160,8 @@ Before running the containers, here are the key environment variables used:
    
         ngrok http 3000
 
-It gives you a temporary link to access your local app over the internet.
-        
-   📝 A full guide on using Ngrok is coming soon, but feel free to try it out on your own!
+It gives you a temporary link to access your local app over the internet.        
+   
  ---   
 
 # ❓ FAQs
