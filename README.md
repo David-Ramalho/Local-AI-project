@@ -19,19 +19,19 @@ This guide walks you through a proven, no-nonsense setup in just 6 steps—teste
 ## 🎯 What You Get
 
 - 🛡️ Privacy-Focused AI
-     Keep your data local—no cloud required. Your conversations and data stay on your machine, ensuring full control and privacy.
+       Keep your data local—no cloud required. Your conversations and data stay on your machine, ensuring full control and privacy.
 
--🧠 Model Flexibility  
-   Run and switch between models like LLaMA 2, Mistral, or any Ollama-supported model.
+- 🧠 Model Flexibility  
+       Run and switch between models like LLaMA 2, Mistral, or any Ollama-supported model.
 
 - 🧩 Personalization  
-   Use Open-WebUI to give your AI memory and personality. Customize how your AI behaves and interacts with you.
+        Use Open-WebUI to give your AI memory and personality. Customize how your AI behaves and interacts with you.
 
 - 💾 Persistent Storage  
-   Docker volumes keep your models and data safe—even after a reboot.
+        Docker volumes keep your models and data safe—even after a reboot.
 
 - 🌐 Optional Online Sharing  
-   Use tools like ngrok to securely share your AI with others over the internet.
+        Use tools like ngrok to securely share your AI with others over the internet.
 
 ---
 
