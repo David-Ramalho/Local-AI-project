@@ -204,13 +204,13 @@ It gives you a temporary link to access your local app over the internet.
 #  👏 Credits
    ## Thanks to the amazing tools that made this project personal project possible:
         
-      💡 Ollama
+      💡 Ollama: https://ollama.com/ --  https://github.com/ollama/ollama
 
-      🖥️ Open-WebUI
+      🖥️ Open-WebUI: https://openwebui.com/ --  https://github.com/open-webui
       
-      🐳 Docker
+      🐳 Docker: https://www.docker.com/
       
-      🌐 Ngrok
+      🌐 Ngrok: https://ngrok.com/
 
 #  🔮 Coming Soon
     How to configure memory and persistent conversations trough Rag files settings
