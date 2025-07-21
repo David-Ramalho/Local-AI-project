@@ -49,7 +49,7 @@ This guide walks you through a proven, no-nonsense setup in just 6 steps—teste
    These are the exact steps I structured through multiple trial-and-error setups (over five full installs on both Windows plus on Linux). Just follow along!
    PS: This is Windows' based installation process 
 
-## 🖥️ Prerequisites & Tested On
+ 🖥️ Prerequisites & Tested On
 
 Here are the system specs and versions used during testing. Other setups may work, but this is a proven baseline:
 
@@ -64,7 +64,7 @@ Here are the system specs and versions used during testing. Other setups may wor
 | CPU               | Intel i3 (9th Gen or better)                 | Intel i3-9100F          |
 
 
-### ⚙️ Configuration
+ ⚙️ Configuration
 
 Before running the containers, here are the key environment variables used:
 
