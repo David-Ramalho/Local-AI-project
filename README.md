@@ -82,7 +82,7 @@ Before running the containers, here are the key environment variables used:
    Open PowerShell or CMD as Administrator.           
     Run the following command to install Docker:
     
-     winget install --id Docker.DockerDesktop --source winget
+            winget install --id Docker.DockerDesktop --source winget
           
    * Reboot your machine after installation. Launch Docker Desktop, complete the first-run setup, and make sure “Use the WSL 2 based engine” is enabled. 
 
@@ -91,7 +91,7 @@ Before running the containers, here are the key environment variables used:
  2. 📦 Create a Persistent Volume for Ollama Models
    This makes sure your downloaded models survive container stops or deletions:  
    
-    docker volume create ollama-data
+           docker volume create ollama-data
    ![image](https://github.com/user-attachments/assets/8da63b15-09b4-48e2-8716-9ec9660330b7)
 
 
@@ -99,7 +99,7 @@ Before running the containers, here are the key environment variables used:
  3. 🤖 Spin Up Ollama as an HTTP Service
    This command runs Ollama and makes it available as an API:
    
-    docker run -d --name ollama-server --restart always --gpus all -p 11434:11434 -v ollama-data:/root/.ollama -e OLLAMA_HOST="0.0.0.0:11434" ollama/ollama:latest serve
+           docker run -d --name ollama-server --restart always --gpus all -p 11434:11434 -v ollama-data:/root/.ollama -e OLLAMA_HOST="0.0.0.0:11434" ollama/ollama:latest serve
            
    ![image](https://github.com/user-attachments/assets/24ae70d9-86cd-4f16-aa0f-94c8993b39b2)
 
@@ -115,17 +115,17 @@ Before running the containers, here are the key environment variables used:
 
     
 
-## 4. 📥 Pull a Model via Ollama CLI
+ 4. 📥 Pull a Model via Ollama CLI
    Download your preferred AI model (example below uses phi4-mini-reasoning):  
    
-     docker exec -it ollama-server ollama pull qwen3:1.7b
+            docker exec -it ollama-server ollama pull qwen3:1.7b
            
    💡 You can swap qwen3:1.7b with any other model—like llama3.1:8b. Check out Ollama’s model library for more at https://ollama.com/search
 
-## 5. 🌐 Spin Up Open-WebUI and Connect to Ollama
+ ### 5. 🌐 Spin Up Open-WebUI and Connect to Ollama
    First, create a volume for storing WebUI’s data:
    
-    docker volume create open-webui
+           docker volume create open-webui
           
    Then run the following command to launch the interface:
    
@@ -143,14 +143,14 @@ Before running the containers, here are the key environment variables used:
         
 
 
-## 6. 🗨️ Browse, Select, and Generate!
+### 6. 🗨️ Now you can talk to your own Local LLM!
    Open your browser and go to:
    
           http://localhost:3000
         
    ![image](https://github.com/user-attachments/assets/ebc2a7e5-68c5-4e4f-9f1e-2d2e9fd0e0dd)
 
-## 🌍 Optional: Sharing Online with Ngrok
+### 🌍 Optional: Sharing Online with Ngrok
    Want to let friends or colleagues use your AI remotely? Use ngrok to create a secure tunnel to your localhost.  
     Sign up for a free account here: 
     
@@ -167,7 +167,7 @@ It gives you a temporary link to access your local app over the internet.
 
 # ❓ FAQs
 
-   ## Q: I'm getting a "failed to write file: exit status 0xffffffff" error in Ubuntu WSL. What’s the fix?
+ - Q: I'm getting a "failed to write file: exit status 0xffffffff" error in Ubuntu WSL. What’s the fix?
    
    A: This happens when Docker can’t connect to your Ubuntu WSL distro. Here's how to fix it:
           
@@ -180,13 +180,13 @@ It gives you a temporary link to access your local app over the internet.
           
    Restart Docker Desktop.
         
-   ## Q: Can I use different models?
+   - Q: Can I use different models?
    
    Absolutely! In step 4, replace phi4-mini-reasoning:latest with any other model like llama2:13b.
    
    ###  👉 Check Ollama’s model library for more options!
         
-   ## Q: How do I stop or delete the containers?
+   - Q: How do I stop or delete the containers?
    To stop the containers:
    
           docker stop ollama-server open-webui
@@ -196,7 +196,7 @@ It gives you a temporary link to access your local app over the internet.
           
   ### 🗂️ Note: Your data is safe in volumes, even if containers are deleted.
         
-   ## Q: What if I don’t have a GPU?
+   - Q: What if I don’t have a GPU?
    
    No problem! Just remove the --gpus all flag from the Docker run commands.   
    ⚠️ It’ll run on your CPU—slower, but it works!
