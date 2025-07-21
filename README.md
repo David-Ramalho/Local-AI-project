@@ -1,32 +1,54 @@
-# 🚀 Local-AI-project
- This is a local AI environment powered by Ollama, Docker, and Open-WebUI. It lets you run and interact with AI models (like LLaMA 3) right on your machine through a ChatGPT-like interface—private, fast, and customizable in just 6 steps!
+# 🚀 Build Your Own Local AI Assistant with Docker, Ollama & Open-WebUI
+
+Set up your own **private ChatGPT-like assistant** locally using Ollama, Docker, and Open-WebUI.  
+This guide walks you through a proven, no-nonsense setup in just 6 steps—tested on both Windows and Linux.
+
+---
+
+## 📚 Table of Contents
+- [What You Get](#-what-you-get)
+- [What Each Tool Does](#-what-each-tool-does)
+- [Installation Steps](#️-installation-steps)
+- [Optional: Sharing Online with Ngrok](#-optional-sharing-online-with-ngrok)
+- [FAQs](#-faqs)
+- [Credits](#-credits)
+- [Coming Soon](#-coming-soon)
+
+---
+
+## 🎯 What You Get
+
+### 🛡️ Privacy-Focused AI  
+Keep your data local—no cloud required. Your conversations and data stay on your machine, ensuring full control and privacy.
+
+### 🧠 Model Flexibility  
+Run and switch between models like LLaMA 2, Mistral, or any Ollama-supported model.
+
+### 🧩 Personalization  
+Use Open-WebUI to give your AI memory and personality. Customize how your AI behaves and interacts with you.
+
+### 💾 Persistent Storage  
+Docker volumes keep your models and data safe—even after a reboot.
+
+### 🌐 Optional Online Sharing  
+Use tools like ngrok to securely share your AI with others over the internet.
+
+---
+
+## 🧰 What Each Tool Does
+
+- **Docker**: Runs all components in containers—portable and isolated.
+- **Ollama**: Hosts and serves your AI models locally.
+- **Open-WebUI**: A sleek browser interface to chat with your models.
+- **Ngrok (optional)**: Securely share your local AI assistant online.
+
+---
 
 
-##  🎯 What You Get
-### 🛡️ Privacy-Focused AI: Keep your data local—no cloud required.
-   Your conversations and data stay on your machine, ensuring full control and privacy.
-  
+# 🛠️ Installation Steps   
+   These are the exact steps I structured through multiple trial-and-error setups (over five full installs on both Windows plus on Linux). Just follow along!
+   PS: This is Windows' based installation process 
 
-###  🧠 Model Flexibility: Run and switch between models like LLaMA 2, Mistral, or any Ollama-supported model.
-   Ollama supports a variety of open-source models—pick the one that fits your needs.
-
-
-###  🧩 Personalization: Use Open-WebUI to give your AI memory and personality.
-  Customize how your AI behaves and interacts with you.
-
-
-###  💾 Persistent Storage: Docker volumes keep your models and data safe—even after a reboot.
-  Downloaded models and settings won’t disappear when the container stops or restarts.
- 
-
-###  🌐 Optional Online Sharing: Use tools like ngrok to securely share your AI with others over the internet.
-  Great for remote access, demos, or collaborating with friends and teams.
-
-
-
-
-# 🛠️ Installation Steps
-   Here’s how to set up your local AI environment from scratch. These are the exact steps that I came to strucuture in the simplest way I could during many trials and errors. I have built this envrioment five times both on Windows and linux trying different methods. So just follow along!
 
 
 ## 1. 🔧 Install Docker Desktop
@@ -50,7 +72,7 @@
 ## 3. 🤖 Spin Up Ollama as an HTTP Service
    This command runs Ollama and makes it available as an API:
    
-    docker run -d --name ollama-server --gpus all -p 11434:11434 -v ollama-data:/root/.ollama -e OLLAMA_HOST="0.0.0.0:11434" ollama/ollama:latest serve
+    docker run -d --name ollama-server --restart always --gpus all -p 11434:11434 -v ollama-data:/root/.ollama -e OLLAMA_HOST="0.0.0.0:11434" ollama/ollama:latest serve
            
    ![image](https://github.com/user-attachments/assets/24ae70d9-86cd-4f16-aa0f-94c8993b39b2)
 
@@ -69,9 +91,9 @@
 ## 4. 📥 Pull a Model via Ollama CLI
    Download your preferred AI model (example below uses phi4-mini-reasoning):  
    
-     docker exec -it ollama-server ollama pull phi4-mini-reasoning:latest
+     docker exec -it ollama-server ollama pull qwen3:1.7b
            
-   💡 You can swap phi4-mini-reasoning:latest with any other model—like llama3.1:8b. Check out Ollama’s model library for more at https://ollama.com/search
+   💡 You can swap qwen3:1.7b with any other model—like llama3.1:8b. Check out Ollama’s model library for more at https://ollama.com/search
 
 ## 5. 🌐 Spin Up Open-WebUI and Connect to Ollama
    First, create a volume for storing WebUI’s data:
@@ -107,8 +129,13 @@
     
         https://ngrok.com 
         
-   📝 A full guide on using Ngrok is coming soon, but feel free to try it out on your own!
+   Create a tunnel to port 3000:
+   
+        ngrok http 3000
 
+It gives you a temporary link to access your local app over the internet.
+        
+   📝 A full guide on using Ngrok is coming soon, but feel free to try it out on your own!
 
 
 # ❓ FAQs
@@ -150,11 +177,20 @@
 #  👏 Credits
    ## Thanks to the amazing tools that made this project personal project possible:
         
-        ### 💡 Ollama
-        ### 🖥️ Open-WebUI
-        ### 🐳 Docker
-        ### 🌐 Ngrok
+      💡 Ollama
+
+      🖥️ Open-WebUI
+      
+      🐳 Docker
+      
+      🌐 Ngrok
+
+#  🔮 Coming Soon
+    How to configure memory and persistent conversations trough Rag files settings
+    
+    How to train models using your own documents via finetunin using unsloth(On going)  
+
+    More optimization and customization tips!
+    
 
 💬 That’s it! You now have a full-featured, private, customizable, and extendable local AI environment. Enjoy your own ChatGPT-like assistant—on your own terms!
-
-💡I plan on the future show how to configurate and train the local Ai models using your own data! Follow along!
