@@ -45,7 +45,7 @@ This guide walks you through a proven, no-nonsense setup in just 6 steps—teste
 ---
 
 
-# 🛠️ Installation Steps   
+# 🛠️ Installation process   
    These are the exact steps I structured through multiple trial-and-error setups (over five full installs on both Windows plus on Linux). Just follow along!
    PS: This is Windows' based installation process 
 
@@ -76,7 +76,9 @@ Before running the containers, here are the key environment variables used:
 
 
 
-## 1. 🔧 Install Docker Desktop
+## 🛠️ Installation Steps
+
+1. 🔧 Install Docker Desktop
    Open PowerShell or CMD as Administrator.           
     Run the following command to install Docker:
     
@@ -86,7 +88,7 @@ Before running the containers, here are the key environment variables used:
 
 
 
-## 2. 📦 Create a Persistent Volume for Ollama Models
+ 2. 📦 Create a Persistent Volume for Ollama Models
    This makes sure your downloaded models survive container stops or deletions:  
    
     docker volume create ollama-data
@@ -94,7 +96,7 @@ Before running the containers, here are the key environment variables used:
 
 
 
-## 3. 🤖 Spin Up Ollama as an HTTP Service
+ 3. 🤖 Spin Up Ollama as an HTTP Service
    This command runs Ollama and makes it available as an API:
    
     docker run -d --name ollama-server --restart always --gpus all -p 11434:11434 -v ollama-data:/root/.ollama -e OLLAMA_HOST="0.0.0.0:11434" ollama/ollama:latest serve
