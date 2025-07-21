@@ -49,6 +49,31 @@ Use tools like ngrok to securely share your AI with others over the internet.
    These are the exact steps I structured through multiple trial-and-error setups (over five full installs on both Windows plus on Linux). Just follow along!
    PS: This is Windows' based installation process 
 
+## 🖥️ Prerequisites & Tested On
+
+Here are the system specs and versions used during testing. Other setups may work, but this is a proven baseline:
+
+| Component         | Minimum Version / Notes                      | Tested On              |
+|------------------|-----------------------------------------------|------------------------|
+| Docker Desktop    | Latest stable  | Windows 11 (WSL2)           |  ✅                    |
+| Docker CLI        | Comes with Docker Desktop                    |  ✅                    |
+| Ollama            |  Latest stable                               |  ✅                    |
+| Open-WebUI        |  Latest stable                               |  ✅                    |
+| GPU               | NVIDIA GTX 1650 4GB or better                |  ✅                    |
+| RAM               | 16 GB minimum                                | 16 GB                   |
+| CPU               | Intel i3 (9th Gen or better)                 | Intel i3-9100F          |
+
+
+### ⚙️ Configuration
+
+Before running the containers, here are the key environment variables used:
+
+| Variable       | Description                          | Default / Example Value       |
+|----------------|--------------------------------------|-------------------------------|
+| `OLLAMA_HOST`  | Ollama API listening address         | `0.0.0.0:11434`               |
+| `PROVIDERS`    | Specifies backend for Open-WebUI     | `ollama`                      |
+| `OLLAMA_URL`   | URL to connect WebUI to Ollama       | `http://host.docker.internal:11434` |
+
 
 
 ## 1. 🔧 Install Docker Desktop
