@@ -74,7 +74,7 @@ Before running the containers, here are the key environment variables used:
 | `PROVIDERS`    | Specifies backend for Open-WebUI     | `ollama`                      |
 | `OLLAMA_URL`   | URL to connect WebUI to Ollama       | `http://host.docker.internal:11434` |
 
-
+ ---   
 
 ## 🛠️ Installation Steps
 
@@ -163,7 +163,7 @@ Before running the containers, here are the key environment variables used:
 It gives you a temporary link to access your local app over the internet.
         
    📝 A full guide on using Ngrok is coming soon, but feel free to try it out on your own!
-
+ ---   
 
 # ❓ FAQs
 
@@ -179,14 +179,15 @@ It gives you a temporary link to access your local app over the internet.
    Go to Docker Desktop → Settings → Resources → WSL Integration, and re-enable Ubuntu.
           
    Restart Docker Desktop.
-        
+    ---    
    - Q: Can I use different models?
    
    Absolutely! In step 4, replace phi4-mini-reasoning:latest with any other model like llama2:13b.
    
-   ###  👉 Check Ollama’s model library for more options!
-        
+     👉 Check Ollama’s model library for more options!
+     ---   
    - Q: How do I stop or delete the containers?
+
    To stop the containers:
    
           docker stop ollama-server open-webui
@@ -194,13 +195,13 @@ It gives you a temporary link to access your local app over the internet.
    
           docker rm ollama-server open-webui
           
-  ### 🗂️ Note: Your data is safe in volumes, even if containers are deleted.
-        
+   🗂️ Note: Your data is safe in volumes, even if containers are deleted.
+    ---     
    - Q: What if I don’t have a GPU?
    
    No problem! Just remove the --gpus all flag from the Docker run commands.   
    ⚠️ It’ll run on your CPU—slower, but it works!
-
+ ---   
 #  👏 Credits
    ## Thanks to the amazing tools that made this project personal project possible:
         
