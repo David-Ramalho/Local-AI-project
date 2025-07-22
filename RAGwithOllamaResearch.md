@@ -102,8 +102,8 @@ Admin Settings → Documents → Embedding
 ### 🎯 **Embedding Model Engine Setup**
 
 #### **Option 1: Ollama API (Recommended)**
-```
 Just download the embedding model from Ollama. and then configure the settings as described bellow and in the image print.
+```
 docker exec -it ollama-server ollama pull znbang/bge:small-en-v1.5-q8_0
 ```
 ### 🔧 **Optimal Chunking Configuration**
