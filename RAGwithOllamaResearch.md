@@ -261,7 +261,7 @@ Transform your documents into searchable, AI-ready knowledge chunks.
 
 ```
 PS: I have been testing all of that for months and I'm sharing the settings for my limited hardware. It takes lots of practice and testing tweeking AI models.
-
+```
 Just click the **+** button (upload) next to the message input to add files to the RAG system. 
 
 **Supported file formats include:** TXT, DOCX, JSON, PDF, CSV, MD, EPUB, XLS, XLSX, PPT, and more.
@@ -272,7 +272,7 @@ Just click the **+** button (upload) next to the message input to add files to t
 1. Export chats as JSON from Open WebUI
 2. Convert JSON to TXT format (manually or with tools)
 3. Upload the TXT files to your document knowledge base for persistent memory.
-```
+
 <img width="1919" height="323" alt="image" src="https://github.com/user-attachments/assets/07395611-619c-4704-817d-49cc2ab368b8" />
 
 ---
@@ -362,7 +362,7 @@ Your memories are: [[CONTEXT]]
 
 **Important Note:** When RAG doesn't work as expected, one of the problem is conflict in the model between system prompt and the Rag prompt. Make it sure both are aligned so template optimization is crucial.
 
-```
+
 
 ## 🧪 Step 6: Testing Retrieval and Tuning for Performance
 
@@ -375,9 +375,9 @@ Validate and optimize your RAG system for production use.
    ```
    Example: "What are the installation requirements mentioned in the setup guide?"
    ```
-3. **🔍 Verify Citations:** Look for reference markers like **【Doc1†L10-L20】**
+3. **🔍 Verify Citations:** Look for reference markers. This is included as a rule in the default WebOpen Ui Rag Prompt.
 
-### 📊 **Performance Benchmarks**
+### 📊 **Performance Benchmarks Exemples**
 
 | Metric | Target | Acceptable | Poor |
 |--------|--------|------------|------|
@@ -402,7 +402,7 @@ Validate and optimize your RAG system for production use.
 <summary><strong>🚀 Performance Tuning Checklist</strong></summary>
 
 #### **Memory Optimization**
-- [ ] Monitor VRAM usage with `nvidia-smi`
+- [ ] Monitor VRAM usage with `nvidia-smi` and `Ollama PS `
 - [ ] Adjust batch size based on available memory
 - [ ] Consider CPU fallback for embedding if needed
 
@@ -491,7 +491,7 @@ Congratulations! You now have a production-ready, locally-hosted RAG system that
 
 ### 🌟 **Happy RAG-ing!** 🌟
 
-*Built with ❤️ for the local AI community*
+*Built with ❤️🧠 and 💪🔬 as a way to transfer knowledge withing the AI open Source community* I hope all of this helps in your experimentation journey with AI.
 
 [![GitHub](https://img.shields.io/badge/GitHub-Contribute-green?style=for-the-badge&logo=github)](https://github.com)
 [![OpenWebUI](https://img.shields.io/badge/OpenWebUI-Docs-blue?style=for-the-badge)](https://docs.openwebui.com)
@@ -499,11 +499,12 @@ Congratulations! You now have a production-ready, locally-hosted RAG system that
 
 </div>
 
+---
 
-Research paper:
 
-````markdown
-# Guide to Configuring RAG in Open WebUI with Ollama (Low‑VRAM Best Practices)
+# Research paper: Guide to Configuring RAG in Open WebUI with Ollama (Low‑VRAM Best Practices)
+
+
 
 Retrieval‑Augmented Generation (RAG) allows your local AI to use external knowledge (documents, web data, etc.) to produce more accurate and informed answers. This guide walks through best practices for setting up RAG in Open WebUI using Ollama on a single‑container setup – ideal for a single 4 GB VRAM GPU (e.g. GTX 1650). We use a reference configuration (embedding batch size 4, chunk size 1000, chunk overlap 100, retrieval top_k 7, context ≈8048 tokens) and the Cogito 3B Q4 model as an example. Each step includes recommended settings, model choices, performance impacts, and troubleshooting tips.
 
