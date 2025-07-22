@@ -161,7 +161,7 @@ Engine: SentenceTransformers
 ### 🌟 **Top Embedding Model Choices**
 
 #### **🥇 Primary Recommendation**
-**bge:small-en-v1.5-q8_0** (`bge:small-en-v1.5-q8_0`) For low VRam GPUS.
+**snowflake-arctic-embed2:latest** (`snowflake-arctic-embed2:latest`) For higher VRam GPUS and much better retrival quality.
 - 📊 **Size:** ~568M parameters
 - 📏 **Input Length:** 8,192 tokens
 - 🎯 **Specialty:** High-quality general embeddings
@@ -183,7 +183,7 @@ ollama pull snowflake-arctic-embed2:latest
 - ⚡ **Speed:** Very fast processing
 - 💾 **VRAM:** Minimal usage
 
-### 🔧 **Critical Performance Settings**
+### 🔧 **Critical Performance Settings** I will improve this part soon
 
 | Setting | Recommended | Alternative | Impact |
 |---------|-------------|-------------|---------|
