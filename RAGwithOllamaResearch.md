@@ -316,9 +316,9 @@ Context Allocation (8,048 tokens):
 
 ### 🎨 **Custom Prompt Template**
 
-The default RAG template structure:
-```
-You can use the original default Open WebUI RAG template, which is excellent for citations and enforces a structured approach to document retrieval. However, it may limit creativity since it constrains the model to strictly follow the provided context.
+## The default RAG template structure:
+
+- You can use the original default Open WebUI RAG template, which is excellent for citations and enforces a structured approach to document retrieval. However, it may limit creativity since it constrains the model to strictly follow the provided context.
 
 **Trade-offs:**
 - ✅ Better citations and factual accuracy
@@ -326,9 +326,9 @@ You can use the original default Open WebUI RAG template, which is excellent for
 - ⚠️ May reduce creative interpretation
 - ⚠️ Can be overly restrictive for open-ended queries
 
-##### Custom Minimal Template
+## Custom Minimal Template
 
-For a balance between context awareness and creativity, you can use a simplified template. Here's a minimal approach:
+- For a balance between context awareness and creativity, you can use a simplified template. Here's a minimal approach:
 
 ```
 Your memories are: [[CONTEXT]]
@@ -349,7 +349,7 @@ Your memories are: [[CONTEXT]]
 - Can be combined with system prompts for additional guidance
 - Easier for beginners to understand and modify
 
-##### Template Customization
+## Template Customization
 
 **Customization Path:** `Admin Settings → Documents → RAG Template`
 <img width="1648" height="928" alt="image" src="https://github.com/user-attachments/assets/6c0494c9-5cf4-432b-acca-6eef3fe4b22a" />
