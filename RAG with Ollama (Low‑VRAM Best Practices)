@@ -1,0 +1,255 @@
+````markdown
+# Guide to Configuring RAG in Open WebUI with Ollama (Low‑VRAM Best Practices)
+
+Retrieval‑Augmented Generation (RAG) allows your local AI to use external knowledge (documents, web data, etc.) to produce more accurate and informed answers. This guide walks through best practices for setting up RAG in Open WebUI using Ollama on a single‑container setup – ideal for a single 4 GB VRAM GPU (e.g. GTX 1650). We use a reference configuration (embedding batch size 4, chunk size 1000, chunk overlap 100, retrieval top_k 7, context ≈8048 tokens) and the Cogito 3B Q4 model as an example. Each step includes recommended settings, model choices, performance impacts, and troubleshooting tips.
+
+---
+
+## Table of Contents
+
+1. [Pulling and Configuring the LLM Model](#step-1-pulling-and-configuring-the-llm-model)  
+2. [Setting the Embedding Model in Open WebUI](#step-2-setting-the-embedding-model-in-open-webui)  
+3. [Creating a Knowledge Base for Your Documents](#step-3-creating-a-knowledge-base-for-your-documents)  
+4. [Indexing Documents (Chunking and Embedding)](#step-4-indexing-documents-chunking-and-embedding)  
+5. [Enabling RAG for the LLM (Connecting the Knowledge Base)](#step-5-enabling-rag-for-the-llm-connecting-the-knowledge-base)  
+6. [Testing Retrieval and Tuning for Performance](#step-6-testing-retrieval-and-tuning-for-performance)  
+7. [Conclusion & Key Configuration Summary](#conclusion--key-configuration-summary)  
+8. [Sources](#sources)  
+
+---
+
+## Step 1: Pulling and Configuring the LLM Model
+
+The first step is to obtain a suitable large language model (LLM) that can handle RAG on limited GPU memory.
+
+### Recommended Model
+
+- **Cogito 3B Q4\_K\_M** – a 3.6 B‑parameter model quantized to 4‑bit (≈2.2 GB on disk)  
+  - Supports up to 128 K tokens of context (we’ll use ~8 K tokens / 8048)  
+  - Fits comfortably in 4 GB of VRAM
+
+### Why Extended Context?
+
+- Default LLaMA models have a 2048‑token window, too short for RAG  
+- Increasing to ~8192 tokens ensures space for multiple 1000‑token chunks + query overhead
+
+### How to Pull
+
+```bash
+ollama pull cogito:3b
+````
+
+> Tip: After pulling, verify with:
+>
+> ```bash
+> ollama run cogito:3b -p "Hello"
+> ```
+
+### Alternate Models
+
+* **Mistral 7B 4‑bit** or **Llama2 7B Q4** (may need to lower context to 4096)
+* Smaller (2–4 B) run faster but can be less capable
+* Balance VRAM use vs. accuracy
+
+### Model Settings
+
+* Set the context length to **8192** (or **8048** for comfort)
+* In Open WebUI, ensure the model’s max context reflects this setting
+
+### Performance Impact & Troubleshooting
+
+* Expect a few tokens/sec on GTX 1650
+* Extended context increases KV‑cache size and slightly reduces speed
+* If out‑of‑memory, choose a smaller/ more‑aggressive quantized model (e.g. 3‑bit) or run CPU‑only (slow)
+
+---
+
+## Step 2: Setting the Embedding Model in Open WebUI
+
+Configure your embedding engine in **Admin Settings > Documents**.
+
+### Embedding Model Engine
+
+* **Ollama API endpoint** (e.g. `http://localhost:11434`) – uses GPU for speed
+* Fallback: SentenceTransformers on CPU (slower)
+
+### Embedding Model Choice
+
+1. **Snowflake Arctic Embed v2** (`snowflake-arctic-embed2:latest`)
+
+   * \~568 M params, 8192‑token input length
+2. **BAAI BGE M3** (`BAAI/bge-m3`)
+
+   * Similar scale and token length
+
+> Lighter option: `paraphrase‑MiniLM‑L12‑v2` (\~15 M params)
+
+### Batch Size
+
+* **4** (safe on 4 GB, 4× speedup)
+* Try **8** if headroom; drop to **2** or **1** if OOM
+
+### Hybrid Search
+
+* **Enable** for keyword + dense retrieval
+* BM25 runs on CPU, minimal GPU impact
+
+### Re‑ranker Model (Optional)
+
+* Cross‑encoder (e.g. `bge-reranker-v2-m3`) can improve accuracy
+* **Off** by default on 4 GB to conserve resources
+
+### Memory & Performance
+
+* Embed model (\~1.2 GB) + Cogito (\~2.2 GB) ≈ 3.4 GB total
+* If OOM, run embed on CPU or choose a smaller model
+
+---
+
+## Step 3: Creating a Knowledge Base for Your Documents
+
+1. **Workspace > Knowledge**
+2. Click **“+ Create a Knowledge Base”**
+3. Name it (e.g. `MyDocs` or `Tech Manuals KB`)
+4. Choose a Purpose (e.g. `Assistance`, `QA`, `Reference`)
+5. Save and confirm
+
+> Ensure **chunking** and **embedding** settings (from Steps 1–2) are in place before indexing.
+
+---
+
+## Step 4: Indexing Documents (Chunking and Embedding)
+
+### Uploading Documents
+
+* **Knowledge > \[Your KB]**
+* Use **“+”** to upload files or folders (Markdown, text, PDF, etc.)
+* For complex PDFs, enable Apache Tika in Admin Settings
+
+### Chunking Strategy
+
+* **Tokenizer**: Tiktoken
+* **Chunk Size**: **1000** tokens (\~750–800 words)
+* **Overlap**: **100** tokens (10% overlap)
+
+> Trade‑off:
+>
+> * Smaller chunks → more focused retrieval
+> * Larger chunks → fewer but richer context blocks
+
+### Indexing Process
+
+1. Files are split into chunks
+2. Each chunk is embedded (batch size 4)
+3. Vectors stored in the index
+
+Monitor progress in UI or via Docker logs.
+
+### Troubleshooting
+
+* **Unsupported formats** → convert or enable Tika
+* **Chunk too large** → reduce size to fit embed model’s limit
+* **Slow indexing** → check that GPU embed is enabled; lower batch if VRAM is maxed
+
+---
+
+## Step 5: Enabling RAG for the LLM (Connecting the Knowledge Base)
+
+1. **Workspace > Models**
+2. Click **“+ Add New Model”**
+3. Name it (e.g. `Cogito 3B + MyDocs (RAG)`)
+4. **Base Model**: select your pulled Cogito 3B
+5. **Knowledge Source**: select `MyDocs`
+6. Save/confirm
+
+### Retrieval Settings
+
+* **Top K**: **7** (≈7000 tokens → fits in 8048)
+* **Min Score Threshold**: **0–0.1** (optional)
+* **Hybrid Search**: on (BM25 + embedding)
+* **Re‑ranking**: off by default on 4 GB
+
+### Prompt Template
+
+* Default RAG template prepends:
+
+  ```
+  Reference:
+  <chunk 1>
+  <chunk 2>
+  …
+  Question: {user question}
+  ```
+* Customize in **Admin Settings > Documents > RAG Template**
+
+---
+
+## Step 6: Testing Retrieval and Tuning for Performance
+
+### 6.1 Basic Functionality
+
+1. **Chat > New Chat** with `Cogito 3B + MyDocs (RAG)`
+2. Ask a question in your docs (e.g. “What does the installation section say…?”)
+3. Look for citation markers (e.g. **【Doc1†L10-L20】**)
+
+### 6.2 Performance & Latency
+
+* **Retrieval**: < 1 s
+* **Generation**: \~5–10 s for \~100 tokens on GTX 1650
+* If slow: check GPU usage, re‑ranks, streaming settings
+
+### 6.3 Quality Tuning
+
+* **Omit info** → raise Top K or enable re‑ranker
+* **Extraneous info** → tighten score threshold or instructions
+* **Hallucinations** → add “Answer only from documents” in prompt
+* **Citation issues** → ensure RAG citations are enabled
+
+### 6.4 Balancing Quality & Speed
+
+* Prefer small RAG model (3 B + docs) over large non‑RAG model
+* Monitor `nvidia-smi` for VRAM peaks
+* Adjust chunk size, Top K, batch, and embedding model as needed
+
+### 6.5 Common Issues & Fixes
+
+| Issue                   | Fix                                                         |
+| ----------------------- | ----------------------------------------------------------- |
+| No retrieval            | Confirm context ≥ 8192, KB linked, re‑index if necessary    |
+| Context‑length exceeded | Reduce Top K or chunk size                                  |
+| OOM during generation   | Lower chunk/Top K, unload other models, or use CPU fallback |
+| Embedding OOM           | Lower batch size or run embed on CPU                        |
+| Terse answers           | Add “Give a detailed answer with references” to prompt      |
+
+### 6.6 Ongoing Verification
+
+* **Out‑of‑docs query**: see if it answers or states “not in documents”
+* **Multi‑part queries**: ensure it retrieves from all relevant docs
+* **System prompts**: experiment with stronger instructions for citation
+
+---
+
+## Conclusion & Key Configuration Summary
+
+* **LLM Model**: Cogito 3B Q4, \~8 K context
+* **Embedding Model**: Snowflake Arctic Embed v2 or BGE M3 via Ollama
+* **Chunking**: 1000 tokens, 100 overlap
+* **Retrieval**: Top K 7, hybrid search on, re‑rank off
+* **Batching**: embed batch size 4
+* **Context Size**: \~8048 tokens
+
+By following these steps, you’ll have a fully local RAG system on Open WebUI + Ollama running comfortably on a 4 GB GTX 1650. Enjoy your grounded, document‑aware AI assistant!
+
+---
+
+## Sources
+
+* [Open WebUI RAG Overview](https://docs.openwebui.com/features/rag/)
+* [Ollama Cogito 3B Model](https://ollama.com/library/cogito:3b)
+* [Ollama Arctic Embed v2](https://ollama.com/library/snowflake-arctic-embed2)
+* Reddit user discussions on Open WebUI RAG settings
+* Medium: “Multi‑Source RAG with Hybrid Search and Re‑ranking in OpenWebUI” (Richard Meyer, 2025)
+* Various GitHub issues and discussions on batch size, memory tuning, and troubleshooting
+
+```
+```
