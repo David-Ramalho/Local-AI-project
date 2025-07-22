@@ -38,7 +38,6 @@ Retrieval-Augmented Generation (RAG) empowers your local AI to leverage external
 The foundation of our RAG system starts with selecting an appropriate large language model that can efficiently handle retrieval tasks within our VRAM constraints.
 
 ### 🌟 **Recommended Model**
-
 ** Cogito 3B Q4_K_M - Our top choice for low-VRAM setups. This reasoning model delivers impressive performance while fitting comfortably within 4GB of VRAM.
 Alternative Options
 ** Qwen 3 1.7B - An even lighter option for extremely constrained hardware setups, though with reduced capabilities compared to the Cogito model.
