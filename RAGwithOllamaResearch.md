@@ -328,7 +328,7 @@ Context Allocation (8,048 tokens):
 
 ## Custom Minimal Template
 
-- For a balance between context awareness and creativity, you can use a simplified template. Here's a minimal approach:
+- For a balance between context awareness and creativity, you can use a simplified template. Here's a minimal approach that I use:
 
 ```
 Your memories are: [[CONTEXT]]
@@ -360,8 +360,7 @@ Your memories are: [[CONTEXT]]
 - You can reference context in your system prompt as well for additional control
 - Increase context length to 8192+ tokens in Ollama settings for better RAG performance
 
-**Important Note:** When RAG doesn't work as expected, one of the problem is conflict in the model between system prompt and the Rag prompt. Make it sure both are aligned so template optimization is crucial.
-
+**Important Note:** When RAG doesn't work as expected, one of the problem is conflict in the model between system prompt and the Rag prompt. Make it sure both are aligned so template optimization is crucial. An exemple of my own model prompt: https://openwebui.com/m/davidramalho/echo with my current Rag prompt.
 
 
 ## 🧪 Step 6: Testing Retrieval and Tuning for Performance
