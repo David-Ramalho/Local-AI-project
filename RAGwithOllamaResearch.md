@@ -51,11 +51,11 @@ Alternative Options.
 ### 🚀 **Installation**
 
 ```bash
-# Pull the model
-ollama pull cogito:3b
+# Pull the model through docker - 
+docker exec -it ollama-server ollama pull cogito:3b
 
 # Verify installation
-ollama run cogito:3b -p "Hello, RAG world!"
+docker exec -it ollama-server ollama run cogito:3b -p "Hello, RAG world!"
 ```
 
 ### 🎛️ **Why Extended Context Matters**
@@ -64,8 +64,8 @@ ollama run cogito:3b -p "Hello, RAG world!"
 |--------------|----------|-----------------|
 | 2,048 tokens | ❌ Default LLaMA | Too small for RAG |
 | 4,096 tokens | ⚠️ Basic tasks | Limited RAG capability |
-| 8,192 tokens | ✅ **Recommended** | Perfect for multiple chunks |
-| 16,384+ tokens | 🔥 Advanced | Overkill for most cases |
+| 8,192 tokens | ✅ **Recommended** | Perfect for the current hardware |
+| 16,384+ tokens | 🔥 Advanced | The more the better. hardware limits |
 
 ### 🔀 **Alternative Models**
 
@@ -74,10 +74,10 @@ ollama run cogito:3b -p "Hello, RAG world!"
 
 | Model | Size | VRAM | Context | Notes |
 |-------|------|------|---------|-------|
-| **Mistral 7B Q4** | 7B | ~4GB | 4K-8K | Higher quality, tighter fit |
-| **Llama2 7B Q4** | 7B | ~4GB | 4K | Classic choice |
-| **Phi-3 Mini** | 3.8B | ~2GB | 128K | Microsoft's efficient model |
-| **Gemma 2B** | 2B | ~1.5GB | 8K | Ultra-lightweight |
+| **Qwens 3 1.7B Q4 or Q6** | 1.7B | ~4GB | 4K-8K | Ultra-lightweight, Good Quality |
+| **Llama3 3.2B or 8b Q4** | 7B | ~4GB | 4K | Classic choice |
+| **Phi-4 Mini 4b** | 3.8B | ~2GB | 128K | Microsoft's efficient model |
+| **Gemma 3n** | 2B | ~1.5GB | 8K | Ultra-lightweight |
 
 </details>
 
@@ -103,12 +103,46 @@ Admin Settings → Documents → Embedding
 
 #### **Option 1: Ollama API (Recommended)**
 ```
-Endpoint: http://localhost:11434
-✅ Uses GPU acceleration
-✅ Consistent with LLM setup
-✅ Better performance
+Just download the embedding model from Ollama. and then configure the settings as described bellow and in the image print.
+docker exec -it ollama-server ollama pull znbang/bge:small-en-v1.5-q8_0
 ```
+### 🔧 **Optimal Chunking Configuration**
 
+| Parameter | Value | Reasoning |
+|-----------|-------|-----------|
+| **Embedding Batch size** | `EmBSize` | 4 (depends on the Vram and EMB.model) |
+| **Chunk Size** | **1,000 tokens** | ~750-800 words, optimal balance |
+| **Overlap** | **100 tokens** | 10% overlap prevents context loss |
+| **TOP K** | **7** | 7 chunks retrivel from the RAG |
+
+<img width="1498" height="572" alt="image" src="https://github.com/user-attachments/assets/0112c940-f344-47e3-a954-a4165cc14edf" />
+
+### 📊 **Chunking Strategy Deep Dive**
+
+<details>
+<summary><strong>🧠 Understanding the Trade-offs</strong></summary>
+
+#### **Smaller Chunks (500-750 tokens)**
+- ✅ More precise retrieval
+- ✅ Better for specific facts
+- ❌ May lose broader context
+- ❌ More chunks = more embeddings
+
+#### **Larger Chunks (1200-1500 tokens)**
+- ✅ Preserves more context
+- ✅ Fewer embeddings needed
+- ❌ Less precise matching
+- ❌ May exceed embedding model limits
+
+#### **Our Sweet Spot (1000 tokens)**
+- 🎯 Balances precision and context
+- 🎯 Fits well within embedding limits
+- 🎯 Optimal for most document types
+
+</details>
+
+
+---
 #### **Option 2: SentenceTransformers (Fallback)**
 ```
 Engine: SentenceTransformers
@@ -212,37 +246,6 @@ Transform your documents into searchable, AI-ready knowledge chunks.
    - ✅ **Word Documents** (`.docx`)
    - ✅ **HTML Files**
 
-### 🔧 **Optimal Chunking Configuration**
-
-| Parameter | Value | Reasoning |
-|-----------|-------|-----------|
-| **Tokenizer** | `tiktoken` | OpenAI-compatible, accurate |
-| **Chunk Size** | **1,000 tokens** | ~750-800 words, optimal balance |
-| **Overlap** | **100 tokens** | 10% overlap prevents context loss |
-
-### 📊 **Chunking Strategy Deep Dive**
-
-<details>
-<summary><strong>🧠 Understanding the Trade-offs</strong></summary>
-
-#### **Smaller Chunks (500-750 tokens)**
-- ✅ More precise retrieval
-- ✅ Better for specific facts
-- ❌ May lose broader context
-- ❌ More chunks = more embeddings
-
-#### **Larger Chunks (1200-1500 tokens)**
-- ✅ Preserves more context
-- ✅ Fewer embeddings needed
-- ❌ Less precise matching
-- ❌ May exceed embedding model limits
-
-#### **Our Sweet Spot (1000 tokens)**
-- 🎯 Balances precision and context
-- 🎯 Fits well within embedding limits
-- 🎯 Optimal for most document types
-
-</details>
 
 ### 🔄 **Indexing Process Monitoring**
 
