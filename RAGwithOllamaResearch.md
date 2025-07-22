@@ -1,9 +1,9 @@
 # 🚀 Guide to Configuring RAG in Open WebUI with Ollama(OnProgress)
 ## 💾 Low-VRAM Best Practices for 4GB GPUs
 
-> **🎯 Perfect for:** Low-VRAM setups like GTX 1650 in my case. The better the GPU the Merrier! :)
-> **⚡ Performance:** Optimized for single-container deployment. You can apply same logic in split containers as well 
-> **📊 Reference Config:** Cogito 3B Q4 + znbang/bge:small-en-v1.5-q8_0
+> **🎯 Perfect for: ** Low-VRAM setups like GTX 1650 in my case. The better the GPU the Merrier! :)
+> **⚡ Performance: ** Optimized for single-container deployment. You can apply same logic in split containers as well 
+> **📊 Reference Config: ** Cogito 3B Q4 + znbang/bge:small-en-v1.5-q8_0
 
 ---
 
