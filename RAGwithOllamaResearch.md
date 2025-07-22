@@ -1,9 +1,9 @@
 # 🚀 Guide to Configuring RAG in Open WebUI with Ollama(OnProgress)
 ## 💾 Low-VRAM Best Practices for 4GB GPUs
 
-> **🎯 Perfect for:** GTX 1650, RTX 3060 4GB, or similar low-VRAM setups  
-> **⚡ Performance:** Optimized for single-container deployment  
-> **📊 Reference Config:** Cogito 3B Q4 + Arctic Embed v2
+> **🎯 Perfect for:** Low-VRAM setups like GTX 1650 in my case. The better the GPU the Merrier! :)
+> **⚡ Performance:** Optimized for single-container deployment. You can apply same logic in split containers as well 
+> **📊 Reference Config:** Cogito 3B Q4 + znbang/bge:small-en-v1.5-q8_0
 
 ---
 
@@ -14,7 +14,7 @@ Retrieval-Augmented Generation (RAG) empowers your local AI to leverage external
 |-----------|---------|-------|
 | 🧠 LLM Model | Cogito 3B Q4 | ~2.2GB VRAM |
 | 📝 Context Length | Extended | 8,048 tokens |
-| 🔍 Embedding Model | Arctic Embed v2 | Batch size: 4 |
+| 🔍 Embedding Model | znbang/bge:small-en-v1.5-q8_0 | Batch size: 4 |
 | 📄 Chunk Size | Optimal | 1,000 tokens |
 | 🔄 Chunk Overlap | Balanced | 100 tokens |
 | 📊 Retrieval Top-K | Performance | 7 chunks |
@@ -84,7 +84,7 @@ ollama run cogito:3b -p "Hello, RAG world!"
 > **GTX 1650 Performance:**
 > - 🔄 **Generation Speed:** 2-4 tokens/second
 > - ⏱️ **First Token:** ~2-3 seconds
-> - 📊 **VRAM Usage:** ~2.2GB for model + ~1GB for context
+> - 📊 **VRAM Usage:** ~2.2GB for model + ~1GB for context and RAG
 
 ---
 
@@ -117,7 +117,7 @@ Engine: SentenceTransformers
 ### 🌟 **Top Embedding Model Choices**
 
 #### **🥇 Primary Recommendation**
-**Snowflake Arctic Embed v2** (`snowflake-arctic-embed2:latest`)
+**bge:small-en-v1.5-q8_0** (`bge:small-en-v1.5-q8_0`) For low VRam GPUS.
 - 📊 **Size:** ~568M parameters
 - 📏 **Input Length:** 8,192 tokens
 - 🎯 **Specialty:** High-quality general embeddings
@@ -427,7 +427,7 @@ Congratulations! You now have a production-ready, locally-hosted RAG system that
 
 ### 🧠 **Model Resources**
 - [Cogito 3B Model Page](https://ollama.com/library/cogito:3b) - Primary LLM documentation
-- [Arctic Embed v2](https://ollama.com/library/snowflake-arctic-embed2) - Embedding model details
+- [znbang/bge:small-en-v1.5-q8_0]((https://ollama.com/znbang/bge:small-en-v1.5-q8_0)) - Embedding model details
 - [BGE M3 Documentation](https://huggingface.co/BAAI/bge-m3) - Alternative embedding model
 
 ### 💡 **Community Resources**
@@ -534,7 +534,7 @@ Configure your embedding engine in **Admin Settings > Documents**.
 
 ### Embedding Model Choice
 
-1. **Snowflake Arctic Embed v2** (`snowflake-arctic-embed2:latest`)
+1. **bge:small-en-v1.5-q8_0** (`bge:small-en-v1.5-q8_0`)
 
    * \~568 M params, 8192‑token input length
 2. **BAAI BGE M3** (`BAAI/bge-m3`)
