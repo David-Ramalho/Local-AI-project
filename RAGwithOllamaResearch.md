@@ -110,7 +110,7 @@ docker exec -it ollama-server ollama pull znbang/bge:small-en-v1.5-q8_0
 
 | Parameter | Value | Reasoning |
 |-----------|-------|-----------|
-| **Embedding Batch size** | `EmBSize` | 4 (depends on the Vram and EMB.model) |
+| **Embedding Batch size** | `4` | 4 (depends on the Vram and EMB.model. Each batch size doubles the used memory) |
 | **Chunk Size** | **1,000 tokens** | ~750-800 words, optimal balance |
 | **Overlap** | **100 tokens** | 10% overlap prevents context loss |
 | **TOP K** | **7** | 7 chunks retrivel from the RAG |
@@ -183,7 +183,7 @@ ollama pull snowflake-arctic-embed2:latest
 - ⚡ **Speed:** Very fast processing
 - 💾 **VRAM:** Minimal usage
 
-### 🔧 **Critical Performance Settings** I will improve this part soon
+### 🔧 **Critical Performance Settings(OnProgress)** 
 
 | Setting | Recommended | Alternative | Impact |
 |---------|-------------|-------------|---------|
@@ -253,26 +253,27 @@ Transform your documents into searchable, AI-ready knowledge chunks.
    - ✅ **PDFs** (basic + Tika-enhanced)
    - ✅ **Word Documents** (`.docx`)
    - ✅ **HTML Files**
-
+     
+<img width="1919" height="150" alt="image" src="https://github.com/user-attachments/assets/165063a7-7259-4131-a297-be57c7cf8acc" />
+<img width="1226" height="678" alt="image" src="https://github.com/user-attachments/assets/77b36898-2d98-449a-9b97-06fc61150a2b" />
 
 ### 🔄 **Indexing Process Monitoring**
 
 ```
-Progress Indicators:
-📁 Document Processing    ████████░░ 80%
-🔍 Chunk Generation      ███████░░░ 70%
-🧮 Embedding Creation    ██████░░░░ 60%
-💾 Vector Storage        █████░░░░░ 50%
+PS: I have been testing all of that for months and I'm sharing the settings for my limited hardware. It takes lots of practice and testing tweeking AI models.
+
+Just click the **+** button (upload) next to the message input to add files to the RAG system. 
+
+**Supported file formats include:** TXT, DOCX, JSON, PDF, CSV, MD, EPUB, XLS, XLSX, PPT, and more.
+
+**Pro Tip:** You can export your existing chat conversations from Open WebUI in JSON format, convert them to TXT files, and upload them back into the RAG system for knowledge retention. This creates a feedback loop where your AI can reference previous conversations. TXT format is easier for beginners, and you could use that same data to fine-tune your model using Unsloth (coming soon).
+
+**Steps to upload chats from WebOpenUI:**
+1. Export chats as JSON from Open WebUI
+2. Convert JSON to TXT format (manually or with tools)
+3. Upload the TXT files to your document knowledge base for persistent memory.
 ```
-
-### 🚨 **Common Issues & Solutions**
-
-| Issue | Solution |
-|-------|----------|
-| **PDF Text Garbled** | Enable Apache Tika in Admin Settings |
-| **Chunk Size Error** | Reduce chunk size to fit embedding model |
-| **Slow Processing** | Lower embedding batch size |
-| **Memory Issues** | Process fewer documents simultaneously |
+<img width="1919" height="323" alt="image" src="https://github.com/user-attachments/assets/07395611-619c-4704-817d-49cc2ab368b8" />
 
 ---
 
@@ -282,12 +283,10 @@ Bridge your language model with your knowledge repository.
 
 ### 🎯 **Model Configuration Steps**
 
-1. **🧭 Navigate:** `Workspace → Models`
-2. **➕ Create:** Click `"+ Add New Model"`
-3. **🏷️ Name:** Descriptive identifier (e.g., `Cogito-3B-TechDocs-RAG`)
-4. **🧠 Base Model:** Select `cogito:3b`
-5. **📚 Knowledge Source:** Link your created knowledge base
-6. **💾 Save:** Confirm configuration
+1. **🧭 Navigate:** `Workspace → Models` or directly into the base model `Admin settings → Models`
+2. **➕ Select Knowledge and it should appear the knowledge base you have just created!
+
+<img width="1600" height="520" alt="image" src="https://github.com/user-attachments/assets/ae0ff253-8f69-41fd-a067-437d2c0c2bd6" />
 
 ### ⚙️ **Critical Retrieval Settings**
 
@@ -319,18 +318,51 @@ Context Allocation (8,048 tokens):
 
 The default RAG template structure:
 ```
-📋 Reference Materials:
-[Retrieved Chunk 1]
-[Retrieved Chunk 2]
-...
-[Retrieved Chunk N]
+You can use the original default Open WebUI RAG template, which is excellent for citations and enforces a structured approach to document retrieval. However, it may limit creativity since it constrains the model to strictly follow the provided context.
 
-❓ Question: {user_question}
+**Trade-offs:**
+- ✅ Better citations and factual accuracy
+- ✅ More logical, structured responses
+- ⚠️ May reduce creative interpretation
+- ⚠️ Can be overly restrictive for open-ended queries
+
+##### Custom Minimal Template
+
+For a balance between context awareness and creativity, you can use a simplified template. Here's a minimal approach:
+
+```
+Your memories are: [[CONTEXT]]
+
+<context>
+{{CONTEXT}}
+</context>
+
+<user_query>
+{{QUERY}}
+</user_query>
+
 ```
 
-**Customization Path:** `Admin Settings → Documents → RAG Template`
+**Key Benefits:**
+- Maintains context awareness
+- Allows for more natural responses
+- Can be combined with system prompts for additional guidance
+- Easier for beginners to understand and modify
 
----
+##### Template Customization
+
+**Customization Path:** `Admin Settings → Documents → RAG Template`
+<img width="1648" height="928" alt="image" src="https://github.com/user-attachments/assets/6c0494c9-5cf4-432b-acca-6eef3fe4b22a" />
+
+**Pro Tips:**
+- Test different templates with your specific use case
+- Consider your balance between accuracy and creativity
+- You can reference context in your system prompt as well for additional control
+- Increase context length to 8192+ tokens in Ollama settings for better RAG performance
+
+**Important Note:** When RAG doesn't work as expected, one of the problem is conflict in the model between system prompt and the Rag prompt. Make it sure both are aligned so template optimization is crucial.
+
+```
 
 ## 🧪 Step 6: Testing Retrieval and Tuning for Performance
 
