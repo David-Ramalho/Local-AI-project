@@ -42,7 +42,7 @@ The foundation of our RAG system starts with selecting an appropriate large lang
 Alternative Options.
 - Qwen 3 1.7B - An even lighter option for extremely constrained hardware setups, though with reduced capabilities compared to the Cogito model.
 - Qwen 3 4B - Offers enhanced intelligence and reasoning capabilities, but operates at the upper limit of 4GB VRAM capacity. 
-### Settings for Cogito: 
+### 🤖 Settings for Cogito: 
 - 📊 **Parameters:** 3.6B (4-bit quantized)
 - 💾 **Storage:** ~2.2GB on disk
 - 🔥 **VRAM Usage:** Fits comfortably in 4GB
