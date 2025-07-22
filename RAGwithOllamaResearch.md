@@ -491,7 +491,7 @@ Congratulations! You now have a production-ready, locally-hosted RAG system that
 
 ### 🌟 **Happy RAG-ing!** 🌟
 
-*Built with ❤️🧠 and 💪🔬 as a way to transfer knowledge withing the AI open Source community* I hope all of this helps in your experimentation journey with AI.
+*Built with ❤️🧠 and 💪🔬 as a way to transfer knowledge within the AI open source community* I hope all of this helps in your experimentation journey with AI.
 
 [![GitHub](https://img.shields.io/badge/GitHub-Contribute-green?style=for-the-badge&logo=github)](https://github.com)
 [![OpenWebUI](https://img.shields.io/badge/OpenWebUI-Docs-blue?style=for-the-badge)](https://docs.openwebui.com)
