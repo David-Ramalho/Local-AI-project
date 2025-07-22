@@ -143,12 +143,20 @@ docker exec -it ollama-server ollama pull znbang/bge:small-en-v1.5-q8_0
 
 
 ---
-#### **Option 2: SentenceTransformers (Fallback)**
+
+#### **Option 2: SentenceTransformers (Default)**
+Open WebUI uses SentenceTransformers as the default embedding engine for RAG (Retrieval Augmented Generation) functionality. 
+
+**Documentation:**
+- [Open WebUI Configuration](https://docs.openwebui.com/getting-started/env-configuration/)
+- [SentenceTransformers Library](https://sbert.net/)
 ```
 Engine: SentenceTransformers
 ⚠️ CPU-only processing
 ⚠️ Slower but more compatible
 ```
+<img width="1451" height="212" alt="image" src="https://github.com/user-attachments/assets/5c8feccb-7576-4a22-9d6a-f8f89791ed17" />
+
 
 ### 🌟 **Top Embedding Model Choices**
 
