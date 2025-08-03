@@ -1,7 +1,7 @@
 # 🚀 Build Your Own Local AI Assistant with Docker, Ollama & Open-WebUI
 
 Set up your own **private ChatGPT-like assistant** locally using Ollama, Docker, and Open-WebUI.  
-This guide walks you through a proven, no-nonsense setup in just 6 steps—tested on both Windows and Linux.
+This guide walks you through a proven, no-nonsense setup in just 6 steps—tested for windows based.
 
 ---
 
