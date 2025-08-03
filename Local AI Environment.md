@@ -1,4 +1,4 @@
-# Local AI Environment - Beyond Standard Chat Interfaces(Ongoing) - Personal Project
+# Local AI Environment Research - Beyond Standard Chat Interfaces(Ongoing) - Personal Project
 
 This isn't just another local LLM setup. It's a complete AI development environment focused on creating genuinely intelligent assistants that understand their own technical context and maintain persistent memory without performance penalties.
 
