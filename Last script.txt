@@ -1,0 +1,707 @@
+#!/usr/bin/env python3
+"""
+Echo SFT + Tools - Fixed Version
+- Assistant-only loss (SYSTEM aux optional)
+- Unsloth LoRA + 4-bit base
+- Reliable resume / checkpoints
+- Startup menu when checkpoint exists (or --menu-first)
+- GGUF export via llama.cpp converter (handles mistral_common)
+- Fixed memory management issues
+- Fixed read-only filesystem checkpoint issue
+"""
+
+import os, sys, json, glob, time, shutil, subprocess, argparse, re, gc
+from typing import List
+
+# ---------------- Env toggles ----------------
+os.environ["TORCH_COMPILE_DISABLE"] = "1"
+os.environ["UNSLOTH_COMPILE_DISABLE"] = "1"
+os.environ["TRITON_DISABLE_LINE_INFO"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512,roundup_power2_divisions:16,expandable_segments:True"
+
+def install_deps():
+    def pipi(*args): return subprocess.check_call([sys.executable, "-m", "pip", *args])
+    print("Installing dependencies…")
+    pipi("install", "--quiet",
+         "accelerate==0.34.2","transformers==4.55.0","trl==0.10.1","peft==0.11.1",
+        "datasets>=2.19.0,<3.0","sentencepiece","huggingface_hub","safetensors",
+        "protobuf==3.20.3","mistral_common>=1.1.0","numpy","tokenizers>=0.15")
+    try:    pipi("install", "--quiet", "bitsandbytes")
+    except subprocess.CalledProcessError: pipi("install", "--quiet", "bitsandbytes-cpu")
+    try:    pipi("install", "--quiet", "--no-deps", "unsloth==2025.8.1", "unsloth_zoo==2025.8.1")
+    except subprocess.CalledProcessError: pipi("install", "--quiet", "--no-deps", "git+https://github.com/unslothai/unsloth.git@main")
+    print("Dependencies installed.")
+
+if "/kaggle/" in os.getcwd(): install_deps()
+
+# ---------------- Imports ----------------
+import torch, torch.nn.functional as F, torch._dynamo as _dynamo
+_dynamo.disable()
+
+from datasets import Dataset
+from transformers import TrainingArguments, TrainerCallback, AutoModelForCausalLM, AutoTokenizer, DataCollatorForLanguageModeling
+from trl import SFTTrainer
+from peft import PeftModel
+from unsloth import FastLanguageModel
+from accelerate import Accelerator
+
+# Patch Accelerate unwrap keep_torch_compile
+if not getattr(Accelerator.unwrap_model, "_patched_ignore_keep", False):
+    _ACCEL_ORIG_UNWRAP = Accelerator.unwrap_model
+    def _unwrap_model_no_keep(self, model, *args, **kwargs):
+        kwargs.pop("keep_torch_compile", None)
+        return _ACCEL_ORIG_UNWRAP(self, model, *args, **kwargs)
+    Accelerator.unwrap_model = _unwrap_model_no_keep
+    Accelerator.unwrap_model._patched_ignore_keep = True
+
+# ---------------- Config ----------------
+BASE_MODEL   = "deepcogito/cogito-v1-preview-llama-3B"
+MAXLEN       = 4096
+LORA_R       = 64
+LORA_ALPHA   = 128
+# FIXED: Always use writable directory for checkpoints
+CHECKPOINT_DIR = "/kaggle/working/checkpoints"
+LORA_DIR       = "/kaggle/working/lora"
+MERGED_DIR     = "/kaggle/working/merged_model"
+
+COGITO_TEMPLATE = """{{ bos_token }}
+{% set have_system = messages and messages[0]['role']=='system' %}
+{% if enable_thinking %}
+    {% if have_system %}
+<|start_header_id|>system<|end_header_id|>
+
+Enable deep thinking subroutine.
+{% if messages[0]['content']|trim %}{{messages[0]['content']|trim}}{%endif%}<|eot_id|>
+    {% else %}
+<|start_header_id|>system<|end_header_id|>
+
+Enable deep thinking subroutine.<|eot_id|>
+    {% endif %}
+{% endif %}
+{% for message in messages %}
+{% if not(enable_thinking and have_system and loop.index0==0 and message['role']=='system') %}
+{% if message['role']=='user' %}<|start_header_id|>user<|end_header_id|>
+
+{{message['content']|trim}}<|eot_id|>{% elif message['role']=='assistant' %}<|start_header_id|>assistant<|end_header_id|>
+
+{{message['content']|trim}}<|eot_id|>{% endif %}
+{% endif %}{% endfor %}{% if add_generation_prompt %}<|start_header_id|>assistant<|end_header_id|>
+
+{% endif %}"""
+
+# ---------------- Globals ----------------
+global_trainer = None
+global_model = None
+global_tokenizer = None
+chat_initialized = False
+parsed_args = None
+
+# ---------------- Utils ----------------
+def clear_gpu_memory():
+    """Clear GPU memory and garbage collect"""
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+    gc.collect()
+
+def check_gpu():
+    if not torch.cuda.is_available():
+        raise RuntimeError("No GPU available - enable GPU accelerator")
+    n = torch.cuda.device_count(); name = torch.cuda.get_device_name(0); cc = torch.cuda.get_device_capability(0)
+    print(f"GPU: {name} | CC ({cc[0]},{cc[1]}) | GPUs: {n}")
+    return n, (cc[0] >= 8)
+
+def find_dataset():
+    for pattern in [
+        "/kaggle/input/**/echo_dataset_sft.jsonl","/kaggle/input/**/echo_dataset.jsonl",
+        "/kaggle/input/**/*.jsonl","/kaggle/working/echo_dataset_sft.jsonl",
+        "/kaggle/working/echo_dataset.jsonl","./echo_dataset_sft.jsonl","./echo_dataset.jsonl",
+    ]:
+        files = glob.glob(pattern, recursive=True)
+        if files: return files[0]
+    raise FileNotFoundError("Dataset not found. Upload echo_dataset_sft.jsonl (or echo_dataset.jsonl).")
+
+def ensure_loaded_model():
+    global global_model, global_tokenizer
+    if global_model is not None and global_tokenizer is not None: return
+    _, is_ampere = check_gpu()
+    print("Loading base model…")
+    m, t = FastLanguageModel.from_pretrained(
+        BASE_MODEL, load_in_4bit=True, device_map="auto", max_seq_length=MAXLEN,
+        attn_implementation="flash_attention_2" if is_ampere else "eager", trust_remote_code=True
+    )
+    t.chat_template = COGITO_TEMPLATE
+    if getattr(t, "eos_token", None) != "<|eot_id|>":
+        if "<|eot_id|>" not in t.get_vocab(): t.add_special_tokens({"eos_token":"<|eot_id|>"}); m.resize_token_embeddings(len(t))
+        else: t.eos_token="<|eot_id|>"; t.eos_token_id=t.convert_tokens_to_ids("<|eot_id|>")
+    if t.pad_token is None: t.pad_token=t.eos_token; t.pad_token_id=t.eos_token_id
+    m = FastLanguageModel.get_peft_model(
+        m, r=LORA_R, target_modules=["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"],
+        lora_alpha=LORA_ALPHA, lora_dropout=0.0, bias="none", use_gradient_checkpointing="unsloth",
+    )
+    global_model, global_tokenizer = m, t
+    print("Model loaded with LoRA.")
+
+def load_and_process_dataset(tokenizer):
+    path = find_dataset()
+    print(f"Loading dataset: {path}")
+    with open(path, "r", encoding="utf-8") as f:
+        records = [json.loads(line) for line in f if line.strip()] if path.endswith(".jsonl") else json.load(f)
+    raw = Dataset.from_list(records)
+    def process(ex):
+        msgs = ex.get("conversations", ex.get("messages", []))
+        if not msgs: return {"text": ""}
+        txt = tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False, enable_thinking=True)
+        return {"text": txt}
+    ds = raw.map(process, desc="Applying chat template")
+    ds = ds.filter(lambda x: len(x["text"]) > 50, desc="Filter short")
+    sp = ds.train_test_split(test_size=0.1, seed=42)
+    print(f"Train: {len(sp['train'])} | Val: {len(sp['test'])}")
+    return sp["train"], sp["test"]
+
+def copy_checkpoint_if_needed(checkpoint_path):
+    """Copy checkpoint from input to working directory if needed"""
+    if not checkpoint_path or "/kaggle/input/" not in checkpoint_path:
+        return checkpoint_path
+    
+    # Create working checkpoint path
+    working_path = checkpoint_path.replace("/kaggle/input/", "/kaggle/working/")
+    
+    if os.path.exists(working_path):
+        print(f"✅ Working checkpoint already exists: {working_path}")
+        return working_path
+    
+    print(f"📁 Copying checkpoint from input to working directory...")
+    print(f"   From: {checkpoint_path}")
+    print(f"   To:   {working_path}")
+    
+    try:
+        os.makedirs(os.path.dirname(working_path), exist_ok=True)
+        if os.path.isdir(checkpoint_path):
+            shutil.copytree(checkpoint_path, working_path)
+        else:
+            shutil.copy2(checkpoint_path, working_path)
+        print(f"✅ Successfully copied checkpoint to {working_path}")
+        return working_path
+    except Exception as e:
+        print(f"❌ Failed to copy checkpoint: {e}")
+        print(f"   Will try to use original path: {checkpoint_path}")
+        return checkpoint_path
+
+def get_latest_checkpoint():
+    """Find the latest checkpoint in both working and input directories"""
+    # Check both working and input directories
+    checkpoint_paths = [
+        "/kaggle/working/checkpoints",
+        "/kaggle/working/checkpoint", 
+        CHECKPOINT_DIR,
+        "/kaggle/input/checkpoint312",
+        "/kaggle/input/checkpoint",
+        "/kaggle/input/checkpoints"
+    ]
+    
+    latest_checkpoint = None
+    latest_step = -1
+    
+    for base_dir in checkpoint_paths:
+        if not os.path.exists(base_dir): 
+            continue
+            
+        # Look for checkpoint-* subdirectories
+        checkpoint_dirs = glob.glob(os.path.join(base_dir, "checkpoint-*"))
+        
+        # Also check if base_dir itself is a checkpoint (has trainer_state.json)
+        trainer_state = os.path.join(base_dir, "trainer_state.json")
+        if os.path.exists(trainer_state):
+            checkpoint_dirs.append(base_dir)
+        
+        for ckpt_dir in checkpoint_dirs:
+            try:
+                if "checkpoint-" in os.path.basename(ckpt_dir):
+                    step = int(os.path.basename(ckpt_dir).split("checkpoint-")[-1])
+                else:
+                    step = 0  # For base directories with trainer_state.json
+                    
+                if step > latest_step:
+                    latest_step = step
+                    latest_checkpoint = ckpt_dir
+            except ValueError:
+                continue
+    
+    if not latest_checkpoint: 
+        return None, 0.0
+    
+    # Get epoch information
+    epoch = 0.0
+    trainer_state_path = os.path.join(latest_checkpoint, "trainer_state.json")
+    if os.path.exists(trainer_state_path):
+        try:
+            with open(trainer_state_path, 'r') as f:
+                state_data = json.load(f)
+                epoch = float(state_data.get("epoch", 0.0))
+        except Exception as e:
+            print(f"⚠️ Could not read epoch from trainer_state.json: {e}")
+    
+    print(f"🔍 Found checkpoint: {latest_checkpoint} (step {latest_step}, epoch ≈{epoch:.2f})")
+    return latest_checkpoint, epoch
+
+class LogCallback(TrainerCallback):
+    def __init__(self): self._n=0
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        if logs and "loss" in logs: print(f"[log] step={state.global_step} loss={logs['loss']:.4f}")
+        self._n += 1
+        if self._n % 10 == 0 and torch.cuda.is_available():
+            for i in range(torch.cuda.device_count()):
+                alloc = torch.cuda.memory_allocated(i)/1024**3; resv  = torch.cuda.memory_reserved(i)/1024**3
+                print(f"GPU {i}: {alloc:.1f} GB alloc | {resv:.1f} GB reserved")
+
+# ---------------- Collator / Trainer ----------------
+class AssistantWeightedCollator(DataCollatorForLanguageModeling):
+    def __init__(self, tokenizer, system_weight: float = 0.5, user_weight: float = 0.2, mlm: bool = False):
+        super().__init__(tokenizer=tokenizer, mlm=mlm)
+        self.system_weight = float(system_weight)
+        self.user_weight = float(user_weight)
+        self.eot_id = tokenizer.eos_token_id
+        self.assistant_hdr = tokenizer.encode("<|start_header_id|>assistant<|end_header_id|>", add_special_tokens=False)
+        self.system_hdr    = tokenizer.encode("<|start_header_id|>system<|end_header_id|>", add_special_tokens=False)
+        self.user_hdr      = tokenizer.encode("<|start_header_id|>user<|end_header_id|>", add_special_tokens=False)
+    @staticmethod
+    def _span_mask(tokens: List[int], hdr: List[int], eot_id: int):
+        mask = torch.zeros(len(tokens), dtype=torch.bool)
+        starts, H = [], len(hdr)
+        for i in range(0, len(tokens)-H+1):
+            if tokens[i:i+H] == hdr: starts.append(i+H)
+        eots = [i for i,t in enumerate(tokens) if t==eot_id]
+        for s in starts:
+            e = next((p for p in eots if p > s), len(tokens)-1)
+            mask[s:e+1] = True
+        return mask
+    def torch_call(self, examples):
+        fe=[]
+        for ex in examples:
+            if isinstance(ex, dict):
+                d={}; 
+                if "input_ids" in ex: d["input_ids"]=ex["input_ids"]
+                if "attention_mask" in ex: d["attention_mask"]=ex["attention_mask"]
+                fe.append(d)
+            else: fe.append(ex)
+        batch = super().torch_call(fe)
+        if "labels" not in batch: batch["labels"]=batch["input_ids"].clone()
+        weights = torch.zeros_like(batch["input_ids"], dtype=torch.float32)
+        for i, ids in enumerate(batch["input_ids"]):
+            toks = ids.tolist()
+            a = self._span_mask(toks, self.assistant_hdr, self.eot_id)
+            s = self._span_mask(toks, self.system_hdr,    self.eot_id)
+            u = self._span_mask(toks, self.user_hdr,      self.eot_id)
+            labels = batch["labels"][i]; keep = a.clone()
+            if self.system_weight>0.0: keep |= s
+            if self.user_weight>0.0: keep |= u
+            labels[~keep] = -100; batch["labels"][i]=labels
+            weights[i][a]=1.0
+            if self.system_weight>0.0: weights[i][s]=self.system_weight
+            if self.user_weight>0.0: weights[i][u]=self.user_weight
+        batch["loss_weights"]=weights
+        return batch
+
+class WeightedSFTTrainer(SFTTrainer):
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+        labels = inputs.pop("labels"); weights = inputs.pop("loss_weights", None)
+        outputs = model(**inputs); logits = outputs.logits
+        shift_logits = logits[:, :-1, :].contiguous(); shift_labels = labels[:, 1:].contiguous()
+        loss = F.cross_entropy(shift_logits.view(-1, shift_logits.size(-1)),
+                               shift_labels.view(-1), ignore_index=-100, reduction="none").view_as(shift_labels)
+        if weights is not None:
+            w = weights[:, 1:].contiguous(); w = torch.where(shift_labels==-100, torch.zeros_like(w), w)
+            denom = torch.clamp(w.sum(), min=1.0); loss = (loss*w).sum()/denom
+        else: loss = loss.mean()
+        return (loss, outputs) if return_outputs else loss
+
+def build_trainer(epochs, lr, batch_size, grad_accum, system_weight, user_weight):
+    ensure_loaded_model()
+    train_ds, val_ds = load_and_process_dataset(global_tokenizer)
+    if torch.cuda.device_count()>1 and grad_accum<4: grad_accum=4
+    
+    # Ensure checkpoint directory exists and is writable
+    os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+    
+    args = TrainingArguments(
+        output_dir=CHECKPOINT_DIR, num_train_epochs=epochs,
+        per_device_train_batch_size=batch_size, gradient_accumulation_steps=grad_accum,
+        learning_rate=lr, lr_scheduler_type="cosine", warmup_steps=75, weight_decay=0.0,
+        fp16=True, tf32=(torch.cuda.get_device_capability(0)[0] >= 8),
+        gradient_checkpointing=True, max_grad_norm=0.7, do_eval=True, eval_steps=50,
+        save_steps=50, save_total_limit=1, logging_steps=1, report_to="none",
+        dataloader_pin_memory=False, dataloader_num_workers=1, dataloader_drop_last=True,
+        remove_unused_columns=False, save_strategy="steps", prediction_loss_only=True,
+    )
+    trainer = WeightedSFTTrainer(
+        model=global_model, tokenizer=global_tokenizer, train_dataset=train_ds, eval_dataset=val_ds,
+        data_collator=AssistantWeightedCollator(global_tokenizer, system_weight=system_weight, user_weight=user_weight),
+        dataset_text_field="text", max_seq_length=MAXLEN, packing=False, args=args,
+        callbacks=[LogCallback()],
+        dataset_num_proc=1,
+    )
+    return trainer
+
+def save_lora():
+    os.makedirs(LORA_DIR, exist_ok=True)
+    (global_model.module if hasattr(global_model,"module") else global_model).save_pretrained(LORA_DIR)
+    global_tokenizer.save_pretrained(LORA_DIR)
+    print(f"LoRA saved → {LORA_DIR}")
+
+def merge_and_export_full():
+    """Safely merge LoRA with base model with proper memory management"""
+    global global_model, global_trainer
+    
+    print("Merging LoRA with base (CPU) …")
+    
+    # Clear training memory first
+    if global_trainer is not None:
+        del global_trainer
+        global_trainer = None
+    
+    # Clear existing model from GPU
+    if global_model is not None:
+        del global_model
+        global_model = None
+    
+    clear_gpu_memory()
+    
+    try:
+        # Load base model on CPU to avoid memory conflicts
+        print("Loading base model on CPU...")
+        base = AutoModelForCausalLM.from_pretrained(
+            BASE_MODEL, 
+            torch_dtype=torch.float16, 
+            device_map={"": "cpu"}, 
+            trust_remote_code=True,
+            low_cpu_mem_usage=True
+        )
+        
+        # Load tokenizer
+        tok = AutoTokenizer.from_pretrained(LORA_DIR)
+        
+        # Load and merge PEFT model
+        print("Loading LoRA adapter...")
+        peft_model = PeftModel.from_pretrained(base, LORA_DIR, device_map={"": "cpu"})
+        
+        print("Merging LoRA with base model...")
+        merged = peft_model.merge_and_unload()
+        merged = merged.to(torch.float16)
+        
+        # Clean up intermediate models
+        del peft_model
+        del base
+        clear_gpu_memory()
+        
+        # Save merged model
+        os.makedirs(MERGED_DIR, exist_ok=True)
+        print("Saving merged model...")
+        merged.save_pretrained(MERGED_DIR, safe_serialization=True, max_shard_size="2GB")
+        tok.save_pretrained(MERGED_DIR)
+        
+        # Clean up merged model
+        del merged
+        clear_gpu_memory()
+        
+        print(f"✅ Merged model saved → {MERGED_DIR}")
+        return MERGED_DIR
+        
+    except Exception as e:
+        print(f"❌ Merge failed: {e}")
+        clear_gpu_memory()
+        # Reload the training model if merge failed
+        ensure_loaded_model()
+        raise
+
+# ---------------- GGUF export ----------------
+def _ensure_llamacpp_and_reqs():
+    if not os.path.isdir("llama.cpp"):
+        subprocess.check_call(["git","clone","https://github.com/ggml-org/llama.cpp.git"])
+    try: import mistral_common  # noqa
+    except Exception:
+        subprocess.check_call([sys.executable,"-m","pip","install","--quiet","mistral_common>=1.1.0","numpy","tokenizers>=0.15","sentencepiece"])
+
+def export_gguf(outtype="f16", outname="model-f16.gguf"):
+    """Export to GGUF with proper memory management"""
+    global global_model, global_trainer
+    
+    print(f"📄 Preparing FP16 merged model → GGUF ({outtype}) …")
+    
+    # Check if merged model exists
+    if not (os.path.isdir(MERGED_DIR) and os.path.isfile(os.path.join(MERGED_DIR,"config.json"))):
+        print("ℹ️ MERGED_DIR not found; merging LoRA into base first.")
+        
+        if not os.path.isdir(LORA_DIR):
+            print("❌ No LoRA found. Train or save LoRA first.")
+            return
+        
+        # Clear training memory before merge
+        if global_trainer is not None:
+            del global_trainer
+            global_trainer = None
+        
+        if global_model is not None:
+            del global_model
+            global_model = None
+        
+        clear_gpu_memory()
+        
+        try:
+            # Load base model on CPU
+            base = AutoModelForCausalLM.from_pretrained(
+                BASE_MODEL, 
+                torch_dtype=torch.float16, 
+                device_map={"": "cpu"}, 
+                trust_remote_code=True,
+                low_cpu_mem_usage=True
+            )
+            tok = AutoTokenizer.from_pretrained(LORA_DIR)
+            peftm = PeftModel.from_pretrained(base, LORA_DIR, device_map={"": "cpu"})
+            merged = peftm.merge_and_unload().to(torch.float16)
+            
+            os.makedirs(MERGED_DIR, exist_ok=True)
+            merged.save_pretrained(MERGED_DIR, safe_serialization=True, max_shard_size="2GB")
+            tok.save_pretrained(MERGED_DIR)
+            
+            # Clean up
+            del merged, peftm, base
+            clear_gpu_memory()
+            
+        except Exception as e:
+            print(f"❌ Merge for GGUF failed: {e}")
+            clear_gpu_memory()
+            return
+
+    # Proceed with GGUF conversion
+    _ensure_llamacpp_and_reqs()
+    candidates = ["llama.cpp/convert_hf_to_gguf.py","llama.cpp/convert-hf-to-gguf.py","llama.cpp/convert.py"]
+    converter = next((p for p in candidates if os.path.exists(p)), None)
+    if not converter:
+        print("❌ GGUF converter not found in llama.cpp.")
+        return
+        
+    out_dir = "/kaggle/working/gguf"
+    os.makedirs(out_dir, exist_ok=True)
+    outpath = os.path.join(out_dir, outname)
+    cmd = [sys.executable, converter, MERGED_DIR, "--outfile", outpath, "--outtype", outtype]
+    print("▶️ ", " ".join(cmd))
+    
+    try:
+        subprocess.check_call(cmd)
+        print(f"✅ GGUF created → {outpath}")
+    except subprocess.CalledProcessError as e:
+        print("❌ GGUF conversion error:", e)
+    
+    # Reload model for further use if needed
+    ensure_loaded_model()
+
+# ---------------- Chat helpers ----------------
+def attach_lora_for_inference():
+    global global_model, global_tokenizer, chat_initialized
+    if not os.path.isdir(LORA_DIR): 
+        print(f"❌ No LoRA at {LORA_DIR}. Train or save LoRA first."); return False
+    base = global_model.module if hasattr(global_model,"module") else global_model
+    from peft import PeftModel as _PM
+    if isinstance(base, _PM): chat_initialized=True; return True
+    print(f"🔥 Loading LoRA from: {LORA_DIR}")
+    peft = PeftModel.from_pretrained(base, LORA_DIR, is_trainable=False)
+    if hasattr(global_model,"module"): global_model.module = peft
+    else: globals()["global_model"] = peft
+    try: FastLanguageModel.for_inference(global_model.module if hasattr(global_model,"module") else global_model)
+    except Exception: (global_model.module if hasattr(global_model,"module") else global_model).eval()
+    print("✅ LoRA attached for inference."); chat_initialized=True; return True
+
+def chat_once(prompt, hide_think=False, max_new_tokens=200):
+    ensure_loaded_model()
+    if not chat_initialized and not attach_lora_for_inference(): return ""
+    inf = global_model.module if hasattr(global_model,"module") else global_model
+    try: FastLanguageModel.for_inference(inf)
+    except Exception: inf.eval()
+    prompt_text = global_tokenizer.apply_chat_template(
+        [{"role":"user","content":prompt}], tokenize=False, add_generation_prompt=True, enable_thinking=True)
+    ids = global_tokenizer(prompt_text, return_tensors="pt").to(inf.device if hasattr(inf,"device") else 0)
+    bad_tokens = ["Cogito","cogito","COGITO","Llama","llama","LLAMA"]
+    bad_ids = [global_tokenizer.encode(t, add_special_tokens=False) for t in bad_tokens]
+    with torch.no_grad():
+        out = inf.generate(**ids, max_new_tokens=max_new_tokens, temperature=0.8, top_p=0.9,
+                           repetition_penalty=1.1, pad_token_id=global_tokenizer.eos_token_id,
+                           eos_token_id=global_tokenizer.eos_token_id, do_sample=True, bad_words_ids=bad_ids)
+    txt = global_tokenizer.decode(out[0], skip_special_tokens=False)
+    m = re.findall(r"<\|start_header_id\|>assistant<\|end_header_id\|>\s*\n\n(.*?)(?=<\|eot_id\|>|$)", txt, flags=re.S)
+    ans = (m[-1] if m else txt).strip()
+    if hide_think: ans = re.sub(r"<think>.*?</think>","",ans, flags=re.S).strip()
+    return ans
+
+# ---------------- CLI / Menus ----------------
+def parse_args(argv=None):
+    p = argparse.ArgumentParser(description="Echo SFT training script", add_help=True)
+    p.add_argument("--epochs", type=int, default=1)
+    p.add_argument("--lr", type=float, default=1.2e-4)
+    p.add_argument("--batch-size", type=int, default=1)
+    p.add_argument("--grad-accum", type=int, default=16)
+    p.add_argument("--system-weight", type=float, default=0.5)
+    p.add_argument("--user-weight", type=float, default=0.3)
+    p.add_argument("--resume", action="store_true")
+    p.add_argument("--more-epochs", type=int, default=0)
+    p.add_argument("--merge", action="store_true")
+    p.add_argument("--auto-resume", action="store_true")
+    p.add_argument("--menu-first", action="store_true", help="Show startup actions menu even if no checkpoint")
+    p.add_argument("--gguf-outtype", type=str, default="f16", choices=["f16","q8_0","q5_k_m","q4_k_m"])
+    p.add_argument("--gguf-name", type=str, default="model-f16.gguf")
+    args, unknown = p.parse_known_args(argv if argv is not None else sys.argv[1:])
+    if unknown: print(f"⚠️ Ignoring unrecognised arguments: {unknown}")
+    return args
+
+def _ask_int(msg, default_val):
+    try:
+        s = input(f"{msg} (default {default_val}): ").strip()
+        return default_val if s=="" else int(s)
+    except Exception: return default_val
+
+def startup_actions_menu(latest, done_epochs):
+    print("\n🚦 Startup actions:")
+    if latest: print(f"   Found checkpoint: {latest} (done≈{done_epochs:.2f} epochs)")
+    print("[1] Resume training from latest checkpoint")
+    print("[2] Start fresh training")
+    print("[3] Open Tools Menu (chat / export) without training")
+    print("[4] Export GGUF now")
+    print("[5] Exit")
+    ch = input("➜ ").strip()
+    return ch
+
+def run_training_resume(latest, done_epochs, more_epochs):
+    ensure_loaded_model()
+    target_epochs = int(max(done_epochs,0)) + max(more_epochs,1)
+    print(f"🔄 Resuming from {latest} → target epochs {target_epochs}")
+    
+    # FIXED: Copy checkpoint from input to working directory if needed
+    working_checkpoint = copy_checkpoint_if_needed(latest)
+    
+    trainer = build_trainer(target_epochs, parsed_args.lr, parsed_args.batch_size, parsed_args.grad_accum, parsed_args.system_weight, parsed_args.user_weight)
+    globals()["global_trainer"]=trainer
+        
+    print("🚀 Starting training from loaded model state...")
+    trainer.train(resume_from_checkpoint=working_checkpoint)
+    
+    save_lora()
+    if parsed_args.merge: merge_and_export_full()
+
+def run_training_fresh(epochs):
+    ensure_loaded_model()
+    print("▶️ Starting fresh training…")
+    trainer = build_trainer(epochs, parsed_args.lr, parsed_args.batch_size, parsed_args.grad_accum, parsed_args.system_weight, parsed_args.user_weight)
+    globals()["global_trainer"]=trainer
+    trainer.train()
+    save_lora()
+    if parsed_args.merge: merge_and_export_full()
+
+def continue_train():
+    global global_trainer
+    if global_trainer is None:
+        print("❌ Trainer is not available. Train first."); return
+    latest, done_epochs = get_latest_checkpoint()
+    more = _ask_int("More epochs (0 to cancel)", 1)
+    if more<=0: print("ℹ️ Cancelled."); return
+    import math
+    target_epochs = max(getattr(global_trainer.args,"num_train_epochs",1), math.ceil(done_epochs)) + more
+    global_trainer.args.num_train_epochs = target_epochs
+    if latest:
+        working_checkpoint = copy_checkpoint_if_needed(latest)
+        print(f"🔄 Resuming from {working_checkpoint} (done≈{done_epochs:.2f}) → target epochs {target_epochs}")
+        global_trainer.train(resume_from_checkpoint=working_checkpoint)
+    else:
+        print("▶️ No checkpoint found; continuing from memory.")
+        global_trainer.train()
+    save_lora()
+
+def run_tools_menu():
+    ensure_loaded_model()
+    while True:
+        print("\n📋 Menu Options:")
+        print("[1] Chat")
+        print("[2] Chat (hide <think>)")
+        print("[3] Save LoRA")
+        print("[4] Export GGUF (F16 / quant)")
+        print("[5] Continue Training")
+        print("[6] Merge LoRA to Full Model")
+        print("[7] Exit")
+        ch = input("➜ ").strip()
+        if ch == "1":
+            if attach_lora_for_inference():
+                while True:
+                    u = input("You: ")
+                    if u.lower() in {"exit","quit"}: break
+                    print("🤖", chat_once(u, hide_think=False))
+        elif ch == "2":
+            if attach_lora_for_inference():
+                while True:
+                    u = input("You: ")
+                    if u.lower() in {"exit","quit"}: break
+                    print("🤖", chat_once(u, hide_think=True))
+        elif ch == "3":
+            try: save_lora()
+            except Exception as e: print("❌ Save LoRA failed:", e)
+        elif ch == "4":
+            ot = input(f"Outtype [{parsed_args.gguf_outtype}]: ").strip() or parsed_args.gguf_outtype
+            nm = input(f"Filename [{parsed_args.gguf_name}]: ").strip() or parsed_args.gguf_name
+            try:
+                export_gguf(ot, nm)
+            except Exception as e:
+                print(f"❌ GGUF export failed: {e}")
+                clear_gpu_memory()
+        elif ch == "5":
+            continue_train()
+        elif ch == "6":
+            try:
+                merge_and_export_full()
+            except Exception as e:
+                print(f"❌ Merge failed: {e}")
+                clear_gpu_memory()
+        elif ch == "7":
+            print("👋 Bye."); break
+        else:
+            print("❌ Invalid choice.")
+
+def main(argv=None):
+    global parsed_args
+    parsed_args = parse_args(argv)
+    latest, done_epochs = get_latest_checkpoint()
+
+    # Force startup menu if a checkpoint exists or --menu-first is given
+    if parsed_args.menu_first or (latest and not parsed_args.resume and not parsed_args.auto_resume):
+        choice = startup_actions_menu(latest, done_epochs)
+        if choice == "1":
+            more = _ask_int("How many additional epochs to train?", max(parsed_args.more_epochs,1))
+            run_training_resume(latest, done_epochs, more); run_tools_menu(); return
+        elif choice == "2":
+            ep = _ask_int("Fresh run epochs", parsed_args.epochs)
+            run_training_fresh(ep); run_tools_menu(); return
+        elif choice == "3":
+            run_tools_menu(); return
+        elif choice == "4":
+            try:
+                export_gguf(parsed_args.gguf_outtype, parsed_args.gguf_name)
+            except Exception as e:
+                print(f"❌ GGUF export failed: {e}")
+                clear_gpu_memory()
+            run_tools_menu(); return
+        elif choice == "5":
+            print("👋 Exiting."); return
+        else:
+            print("❌ Invalid choice; opening Tools Menu."); run_tools_menu(); return
+
+    # CLI-driven flows
+    if parsed_args.resume and latest:
+        run_training_resume(latest, done_epochs, max(parsed_args.more_epochs,1))
+    elif latest and parsed_args.auto_resume:
+        run_training_resume(latest, done_epochs, max(parsed_args.more_epochs,1))
+    else:
+        run_training_fresh(parsed_args.epochs)
+
+    # Always open tools after training
+    run_tools_menu()
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
