@@ -99,7 +99,7 @@ Before running the containers, here are the key environment variables used:
  3. 🤖 Spin Up Ollama as an HTTP Service
    This command runs Ollama and makes it available as an API:
    
-           docker run -d --name ollama-server --restart always --gpus all -p 11434:11434 -v ollama-data:/root/.ollama -e OLLAMA_HOST="0.0.0.0:11434" ollama/ollama:latest serve
+           docker run -d --name ollama-server --restart always --gpus all -p 11434:11434 -v ollama-data:/root/.ollama -e OLLAMA_HOST="0.0.0.0:11434" -e OLLAMA_FLASH_ATTENTION=1 -e OLLAMA_KV_CACHE_TYPE=q8_0 ollama/ollama:latest serve
            
    ![image](https://github.com/user-attachments/assets/24ae70d9-86cd-4f16-aa0f-94c8993b39b2)
 
