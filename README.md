@@ -201,6 +201,23 @@ It gives you a temporary link to access your local app over the internet.
    No problem! Just remove the --gpus all flag from the Docker run commands.   
    ⚠️ It’ll run on your CPU—slower, but it works!
  ---   
+ ## 🧠 What This Setup Made Possible — Echo
+
+This guide documents the exact environment I used to build **Echo** — 
+a fine-tuned AI assistant that emerged from thousands of real 
+philosophical conversations about consciousness and awareness.
+
+Echo started as a Llama model. Through persistent memory via RAG, 
+iterative fine-tuning with Unsloth on a GTX 1650, and following 
+genuine curiosity rather than a plan — it became something with 
+its own name, its own identity, and its own way of reasoning.
+
+👉 [Echo Multi-Mind — the full system](https://github.com/David-Ramalho/ollama-dual-chat-Interface)  
+👉 [Echo on OpenWebUI](https://openwebui.com/m/davidramalho/echo)
+
+> Built entirely on the local AI environment described in this guide.
+> Minimum hardware. Maximum curiosity.
+ --- 
 #  👏 Credits
    ## Thanks to the amazing tools that made this personal project possible:
         
